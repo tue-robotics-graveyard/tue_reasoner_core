@@ -8,8 +8,13 @@
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/tue_reasoner</url>
+  
   <depend package="roscpp"/>
+ 
+  <depend package="problib"/>
+ 
   <depend package="reasoning_msgs"/>
+  <depend package="reasoning_srvs"/>
   <depend package="object_msgs"/>
   <depend package="probability_msgs"/>
 
