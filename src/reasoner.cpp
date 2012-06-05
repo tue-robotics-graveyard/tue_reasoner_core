@@ -10,6 +10,7 @@
 #include "tue_reasoner/Variable.h"
 #include "tue_reasoner/Value.h"
 #include "tue_reasoner/Compound.h"
+#include "tue_reasoner/BindingSet.h"
 
 #include <reasoning_srvs/Query.h>
 
@@ -21,9 +22,22 @@
 
 using namespace std;
 
-void predicateIsA(const vector<Term>& args) {
+void predicateIsInRoom(const vector<Term>& args, const vector<BindingSet*>& binding_sets) {
 	if (args.size() != 2) {
 		return;
+	}
+
+	if (args[0].isValue() && args[1].isVariable()) {
+		std::string object_class;
+		args[0].getValue()->getExpectedValue(object_class);
+
+		if (object_class == "cup") {
+			BindingSet* set = new BindingSet();
+			set->addBinding();
+		}
+
+	} else {
+		ROS_WARN("Predicate 'is-in-room': first argument should be a value, second argument should be a variable.");
 	}
 
 }
@@ -67,11 +81,11 @@ bool proccessQuery(reasoning_srvs::Query::Request& req, reasoning_srvs::Query::R
 
 	Compound& C = **conjuncts.begin();
 
-	if (C.getPredicate() == "is-a") {
-		predicateIsA(C.getArguments());
+	vector<BindingSet*> binding_sets;
+
+	if (C.getPredicate() == "is-in-room") {
+		predicateIsInRoom(C.getArguments(), binding_sets);
 	}
-
-
 
 	for(vector<Compound*>::iterator it = conjuncts.begin(); it != conjuncts.end(); ++it) {
 		delete *it;

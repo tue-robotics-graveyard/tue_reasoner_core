@@ -10,8 +10,6 @@
 
 #include "tue_reasoner/Term.h"
 
-#include <problib/pdfs/PDF.h>
-
 class Value : public Term {
 
 public:
@@ -21,6 +19,8 @@ public:
 	Value(const Value& orig);
 
 	virtual ~Value();
+
+	pbl::PDF* getValue() const;
 
 protected:
 

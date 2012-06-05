@@ -18,3 +18,7 @@ Variable::Variable(const Variable& orig) : Term(orig), name_(orig.name_) {
 Variable::~Variable() {
 
 }
+
+const std::string& Variable::getName() const {
+	return name_;
+}

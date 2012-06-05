@@ -27,6 +27,8 @@ public:
 
 	const pbl::PDF* getBinding(const std::string& variable_name) const;
 
+	void setProbability(double probability);
+
 	double getProbability() const;
 
 protected:

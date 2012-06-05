@@ -18,3 +18,7 @@ Value::Value(const Value& orig) : Term(orig), pdf_(pdf_->clone()) {
 Value::~Value() {
 	delete pdf_;
 }
+
+pbl::PDF* Value::getValue() const {
+	return pdf_;
+}

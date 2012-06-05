@@ -7,6 +7,8 @@
 
 #include "tue_reasoner/Term.h"
 
+std::string Term::EMPTY_STRING = "";
+
 Term::Term(Term::Type type) : type_(type) {
 
 }
@@ -33,4 +35,12 @@ bool Term::isCompound() const {
 
 Term::Type Term::type() {
 	return type_;
+}
+
+const std::string& Term::getName() const {
+	return EMPTY_STRING;
+}
+
+pbl::PDF* Term::getValue() const {
+	return 0;
 }

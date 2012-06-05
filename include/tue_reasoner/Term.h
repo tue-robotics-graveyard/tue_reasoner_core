@@ -8,6 +8,8 @@
 #ifndef TERM_H_
 #define TERM_H_
 
+#include <problib/pdfs/PDF.h>
+
 class Term {
 
 public:
@@ -30,11 +32,17 @@ public:
 
 	bool isCompound() const;
 
+	virtual const std::string& getName() const;
+
+	virtual pbl::PDF* getValue() const;
+
 	Type type();
 
 protected:
 
 	Type type_;
+
+	static std::string EMPTY_STRING;
 
 };
 

@@ -22,6 +22,8 @@ public:
 
 	virtual ~Variable();
 
+	const std::string& getName() const;
+
 protected:
 
 	std::string name_;
