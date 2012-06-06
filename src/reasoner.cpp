@@ -23,24 +23,21 @@
 
 using namespace std;
 
-void predicateIsInRoom(const vector<Term*>& args, const vector<BindingSet*>& binding_sets) {
-	if (args.size() != 2) {
-		return;
-	}
+map<string, vector<Compound*> > facts_;
 
-	if (args[0]->isValue() && args[1]->isVariable()) {
-		std::string object_class;
-		args[0]->getValue()->getExpectedValue(object_class);
+void match(const Compound& C, vector<BindingSet*>& binding_sets) {
+	map<string, vector<Compound*> >::iterator it_fact_set = facts_.find(C.getPredicate());
+	if (it_fact_set != facts_.end()) {
+		const vector<Compound*>& fact_set = it_fact_set->second;
+		for(vector<Compound*>::const_iterator it_fact = fact_set.begin(); it_fact != fact_set.end(); ++it_fact) {
+			const Compound& fact = *it_fact;
 
-		if (object_class == "cup") {
-			BindingSet* set = new BindingSet();
-			//set->addBinding();
+			if (fact.getArguments().size() == C.getArguments().size()) {
+
+			}
+
 		}
-
-	} else {
-		ROS_WARN("Predicate 'is-in-room': first argument should be a value, second argument should be a variable.");
 	}
-
 }
 
 Compound* msgToCompound(const reasoning_msgs::Query& msg) {
@@ -84,9 +81,7 @@ bool proccessQuery(reasoning_srvs::Query::Request& req, reasoning_srvs::Query::R
 
 	vector<BindingSet*> binding_sets;
 
-	if (C.getPredicate() == "is-in-room") {
-		predicateIsInRoom(C.getArguments(), binding_sets);
-	}
+	match(C, binding_sets);
 
 	for(vector<Compound*>::iterator it = conjuncts.begin(); it != conjuncts.end(); ++it) {
 		delete *it;
@@ -103,11 +98,9 @@ int main(int argc, char **argv) {
 	string db_filename = "";
 	nh_private.getParam("database_filename", db_filename);
 
-	map<string, Compound*> facts;
-
 	Parser P(db_filename);
 	stringstream parse_error;
-	if (!P.parse(facts, parse_error)) {
+	if (!P.parse(facts_, parse_error)) {
 		ROS_ERROR_STREAM("Error(s) while parsing " << db_filename << ": " << endl << parse_error.str());
 	}
 

@@ -17,7 +17,7 @@ Parser::Parser(std::string filename) : filename_(filename) {
 Parser::~Parser() {
 }
 
-bool Parser::parse(map<std::string, Compound*> facts, stringstream& error) {
+bool Parser::parse(map<std::string, vector<Compound*> > facts, stringstream& error) {
 	ifstream input(filename_.c_str());
 
 	if (!input.is_open()) {
@@ -37,7 +37,7 @@ bool Parser::parse(map<std::string, Compound*> facts, stringstream& error) {
 		if (line_error != "") {
 			error << "    Line " << line_nr << ": " << line_error << endl;
 		} else if (C) {
-			facts[C->getPredicate()] = C;
+			facts[C->getPredicate()].push_back(C);
 		}
 
 		++line_nr;
