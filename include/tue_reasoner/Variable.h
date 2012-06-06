@@ -20,6 +20,8 @@ public:
 
 	Variable(const Variable& orig);
 
+	virtual Variable* clone() const;
+
 	virtual ~Variable();
 
 	const std::string& getName() const;

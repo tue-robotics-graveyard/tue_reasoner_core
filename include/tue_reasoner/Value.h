@@ -18,6 +18,8 @@ public:
 
 	Value(const Value& orig);
 
+	virtual Value* clone() const;
+
 	virtual ~Value();
 
 	pbl::PDF* getValue() const;

@@ -32,6 +32,7 @@ rosbuild_add_executable(reasoner src/Value.cpp
 								 src/Variable.cpp
 								 src/Compound.cpp
 								 src/BindingSet.cpp
+								 src/Parser.cpp
 								 src/reasoner.cpp)
 
 #target_link_libraries(example ${PROJECT_NAME})

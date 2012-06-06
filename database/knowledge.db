@@ -1,0 +1,2 @@
+is-in(cup, kitchen) : 0.5
+is-a(coke_can, can)

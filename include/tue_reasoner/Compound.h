@@ -19,24 +19,32 @@ public:
 
 	Compound(const std::string& predicate);
 
-	Compound(const std::string& predicate, const std::vector<Term>& arguments);
+	Compound(const std::string& predicate, const std::vector<Term*>& arguments);
 
 	Compound(const Compound& orig);
 
-	void addArgument(const Term& term);
-
 	virtual ~Compound();
 
-	std::string getPredicate();
+	virtual Compound* clone() const;
 
-	const std::vector<Term>& getArguments();
+	void addArgument(const Term& term);
+
+	void setProbability(double probability);
+
+	std::string getPredicate() const;
+
+	const std::vector<Term*>& getArguments() const;
+
+	std::string toString() const;
 
 
 protected:
 
+	double probability_;
+
 	std::string predicate_;
 
-	std::vector<Term> arguments_;
+	std::vector<Term*> arguments_;
 
 };
 

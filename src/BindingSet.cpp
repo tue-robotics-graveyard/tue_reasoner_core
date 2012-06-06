@@ -19,6 +19,10 @@ BindingSet::~BindingSet() {
 
 }
 
+BindingSet* BindingSet::clone() const {
+	return new BindingSet(*this);
+}
+
 void BindingSet::addBinding(const std::string& variable_name, const pbl::PDF* pdf) {
 	bindings_[variable_name] = pdf;
 }

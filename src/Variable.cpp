@@ -19,6 +19,10 @@ Variable::~Variable() {
 
 }
 
+Variable* Variable::clone() const {
+	return new Variable(*this);
+}
+
 const std::string& Variable::getName() const {
 	return name_;
 }

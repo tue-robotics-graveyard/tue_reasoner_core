@@ -26,6 +26,8 @@ public:
 
 	virtual ~Term();
 
+	virtual Term* clone() const;
+
 	bool isVariable() const;
 
 	bool isValue() const;

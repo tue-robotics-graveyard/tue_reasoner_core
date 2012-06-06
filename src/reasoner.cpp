@@ -11,6 +11,7 @@
 #include "tue_reasoner/Value.h"
 #include "tue_reasoner/Compound.h"
 #include "tue_reasoner/BindingSet.h"
+#include "tue_reasoner/Parser.h"
 
 #include <reasoning_srvs/Query.h>
 
@@ -22,18 +23,18 @@
 
 using namespace std;
 
-void predicateIsInRoom(const vector<Term>& args, const vector<BindingSet*>& binding_sets) {
+void predicateIsInRoom(const vector<Term*>& args, const vector<BindingSet*>& binding_sets) {
 	if (args.size() != 2) {
 		return;
 	}
 
-	if (args[0].isValue() && args[1].isVariable()) {
+	if (args[0]->isValue() && args[1]->isVariable()) {
 		std::string object_class;
-		args[0].getValue()->getExpectedValue(object_class);
+		args[0]->getValue()->getExpectedValue(object_class);
 
 		if (object_class == "cup") {
 			BindingSet* set = new BindingSet();
-			set->addBinding();
+			//set->addBinding();
 		}
 
 	} else {
@@ -98,6 +99,17 @@ int main(int argc, char **argv) {
 	// Initialize node
 	ros::init(argc, argv, "WorldModel");
 	ros::NodeHandle nh_private("~");
+
+	string db_filename = "";
+	nh_private.getParam("database_filename", db_filename);
+
+	map<string, Compound*> facts;
+
+	Parser P(db_filename);
+	stringstream parse_error;
+	if (!P.parse(facts, parse_error)) {
+		ROS_ERROR_STREAM("Error(s) while parsing " << db_filename << ": " << endl << parse_error.str());
+	}
 
 	ros::ServiceServer service = nh_private.advertiseService("query", proccessQuery);
 

@@ -10,16 +10,19 @@
 std::string Term::EMPTY_STRING = "";
 
 Term::Term(Term::Type type) : type_(type) {
-
 }
 
 Term::Term(const Term& orig) : type_(orig.type_) {
-
 }
 
 Term::~Term() {
 
 }
+
+Term* Term::clone() const {
+	return new Term(*this);
+}
+
 
 bool Term::isVariable() const {
 	return type_ == VARIABLE;

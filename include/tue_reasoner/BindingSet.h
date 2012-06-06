@@ -23,6 +23,8 @@ public:
 
 	virtual ~BindingSet();
 
+	virtual BindingSet* clone() const;
+
 	void addBinding(const std::string& variable_name, const pbl::PDF* pdf);
 
 	const pbl::PDF* getBinding(const std::string& variable_name) const;
