@@ -26,11 +26,7 @@ using namespace std;
 map<string, vector<Compound*> > facts_;
 
 void match(const Compound& C, vector<BindingSet*>& binding_sets) {
-	cout << "Match" << endl;
-
 	map<string, vector<Compound*> >::iterator it_fact_set = facts_.find(C.getPredicate());
-
-	cout << "    predicate = " << C.getPredicate() << endl;
 
 	if (it_fact_set != facts_.end()) {
 		const vector<Compound*>& fact_set = it_fact_set->second;
@@ -43,8 +39,6 @@ void match(const Compound& C, vector<BindingSet*>& binding_sets) {
 			}
 		}
 	}
-
-	cout << "Match - end" << endl;
 }
 
 Compound* msgToCompound(const reasoning_msgs::Query& msg) {
@@ -86,6 +80,8 @@ bool proccessQuery(reasoning_srvs::Query::Request& req, reasoning_srvs::Query::R
 
 	Compound& C = **conjuncts.begin();
 
+	cout << "Matching against: " << C.toString() << endl << endl;
+
 	vector<BindingSet*> binding_sets;
 
 	match(C, binding_sets);
@@ -93,7 +89,6 @@ bool proccessQuery(reasoning_srvs::Query::Request& req, reasoning_srvs::Query::R
 
 		reasoning_msgs::VariableBindingSet binding_set_msg;
 		binding_set_msg.probability = (*it)->getProbability();
-		res.response.probability += binding_set_msg.probability;
 
 		const map<string, const pbl::PDF*>& bindings = (*it)->getBindings();
 		for(map<string, const pbl::PDF*>::const_iterator it2 = bindings.begin(); it2 != bindings.end(); ++it2) {

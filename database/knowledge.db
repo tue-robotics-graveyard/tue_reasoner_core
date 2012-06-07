@@ -1,3 +1,5 @@
 is-in(cup, kitchen) : 0.5
+is-in(table, kitchen) : 0.7
 is-a(coke_can, can)
-is-a(cow, animal)
+is-a(cow, animal) : 0.9
+is-a(teddy-bear, animal) : 0.1
