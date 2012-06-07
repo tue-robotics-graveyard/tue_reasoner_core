@@ -17,7 +17,7 @@ Parser::Parser(std::string filename) : filename_(filename) {
 Parser::~Parser() {
 }
 
-bool Parser::parse(map<std::string, vector<Compound*> > facts, stringstream& error) {
+bool Parser::parse(map<std::string, vector<Compound*> >& facts, stringstream& error) {
 	ifstream input(filename_.c_str());
 
 	if (!input.is_open()) {

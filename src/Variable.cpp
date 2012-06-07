@@ -26,3 +26,8 @@ Variable* Variable::clone() const {
 const std::string& Variable::getName() const {
 	return name_;
 }
+
+BindingSet* Variable::match(const Term& term) const {
+	printf("Variable::match - not yet supported\n");
+	return 0;
+}

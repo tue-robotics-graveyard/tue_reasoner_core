@@ -22,6 +22,8 @@ public:
 
 	virtual ~Value();
 
+	virtual BindingSet* match(const Term& term) const;
+
 	pbl::PDF* getValue() const;
 
 protected:

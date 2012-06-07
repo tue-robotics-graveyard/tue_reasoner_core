@@ -36,6 +36,10 @@ const pbl::PDF* BindingSet::getBinding(const std::string& variable_name) const {
 	return it->second;
 }
 
+const std::map<std::string, const pbl::PDF*>& BindingSet::getBindings() const {
+	return bindings_;
+}
+
 void BindingSet::setProbability(double probability) {
 	probability_ = probability;
 }

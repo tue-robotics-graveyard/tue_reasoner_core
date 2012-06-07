@@ -10,6 +10,8 @@
 
 #include <problib/pdfs/PDF.h>
 
+#include "tue_reasoner/BindingSet.h"
+
 class Term {
 
 public:
@@ -26,7 +28,9 @@ public:
 
 	virtual ~Term();
 
-	virtual Term* clone() const;
+	virtual Term* clone() const = 0;
+
+	virtual BindingSet* match(const Term& term) const = 0;
 
 	bool isVariable() const;
 

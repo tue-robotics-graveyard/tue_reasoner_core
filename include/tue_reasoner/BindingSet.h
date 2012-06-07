@@ -29,6 +29,8 @@ public:
 
 	const pbl::PDF* getBinding(const std::string& variable_name) const;
 
+	const std::map<std::string, const pbl::PDF*>& getBindings() const;
+
 	void setProbability(double probability);
 
 	double getProbability() const;

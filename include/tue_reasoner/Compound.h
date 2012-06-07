@@ -27,6 +27,8 @@ public:
 
 	virtual Compound* clone() const;
 
+	virtual BindingSet* match(const Term& term) const;
+
 	void addArgument(const Term& term);
 
 	void setProbability(double probability);

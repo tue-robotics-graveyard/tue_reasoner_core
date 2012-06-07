@@ -26,18 +26,25 @@ using namespace std;
 map<string, vector<Compound*> > facts_;
 
 void match(const Compound& C, vector<BindingSet*>& binding_sets) {
+	cout << "Match" << endl;
+
 	map<string, vector<Compound*> >::iterator it_fact_set = facts_.find(C.getPredicate());
+
+	cout << "    predicate = " << C.getPredicate() << endl;
+
 	if (it_fact_set != facts_.end()) {
 		const vector<Compound*>& fact_set = it_fact_set->second;
 		for(vector<Compound*>::const_iterator it_fact = fact_set.begin(); it_fact != fact_set.end(); ++it_fact) {
-			const Compound& fact = *it_fact;
+			const Compound* fact = *it_fact;
 
-			if (fact.getArguments().size() == C.getArguments().size()) {
-
+			BindingSet* binding_set = fact->match(C);
+			if (binding_set) {
+				binding_sets.push_back(binding_set);
 			}
-
 		}
 	}
+
+	cout << "Match - end" << endl;
 }
 
 Compound* msgToCompound(const reasoning_msgs::Query& msg) {
@@ -82,6 +89,22 @@ bool proccessQuery(reasoning_srvs::Query::Request& req, reasoning_srvs::Query::R
 	vector<BindingSet*> binding_sets;
 
 	match(C, binding_sets);
+	for(vector<BindingSet*>::iterator it = binding_sets.begin(); it != binding_sets.end(); ++it) {
+
+		reasoning_msgs::VariableBindingSet binding_set_msg;
+		binding_set_msg.probability = (*it)->getProbability();
+		res.response.probability += binding_set_msg.probability;
+
+		const map<string, const pbl::PDF*>& bindings = (*it)->getBindings();
+		for(map<string, const pbl::PDF*>::const_iterator it2 = bindings.begin(); it2 != bindings.end(); ++it2) {
+			reasoning_msgs::VariableBinding binding_msg;
+			binding_msg.variable = it2->first;
+			pbl::PDFtoMsg(*(it2->second), binding_msg.value);
+			binding_set_msg.bindings.push_back(binding_msg);
+
+		}
+		res.response.binding_sets.push_back(binding_set_msg);
+	}
 
 	for(vector<Compound*>::iterator it = conjuncts.begin(); it != conjuncts.end(); ++it) {
 		delete *it;
@@ -92,7 +115,7 @@ bool proccessQuery(reasoning_srvs::Query::Request& req, reasoning_srvs::Query::R
 
 int main(int argc, char **argv) {
 	// Initialize node
-	ros::init(argc, argv, "WorldModel");
+	ros::init(argc, argv, "reasoner");
 	ros::NodeHandle nh_private("~");
 
 	string db_filename = "";
@@ -105,6 +128,8 @@ int main(int argc, char **argv) {
 	}
 
 	ros::ServiceServer service = nh_private.advertiseService("query", proccessQuery);
+
+	ros::spin();
 
 	return 0;
 }

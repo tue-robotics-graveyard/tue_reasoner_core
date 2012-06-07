@@ -28,7 +28,7 @@ public:
 
 	~Parser();
 
-	bool parse(std::map<std::string, std::vector<Compound*> > facts, std::stringstream& error);
+	bool parse(std::map<std::string, std::vector<Compound*> >& facts, std::stringstream& error);
 
 protected:
 

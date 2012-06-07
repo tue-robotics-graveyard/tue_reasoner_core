@@ -24,6 +24,8 @@ public:
 
 	virtual ~Variable();
 
+	virtual BindingSet* match(const Term& term) const;
+
 	const std::string& getName() const;
 
 protected:

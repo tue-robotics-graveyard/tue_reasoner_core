@@ -19,11 +19,6 @@ Term::~Term() {
 
 }
 
-Term* Term::clone() const {
-	return new Term(*this);
-}
-
-
 bool Term::isVariable() const {
 	return type_ == VARIABLE;
 }

@@ -24,3 +24,8 @@ Value* Value::clone() const {
 pbl::PDF* Value::getValue() const {
 	return pdf_;
 }
+
+BindingSet* Value::match(const Term& term) const {
+	printf("Value::match - not yet supported\n");
+	return 0;
+}
