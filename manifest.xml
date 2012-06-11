@@ -18,6 +18,8 @@
   <depend package="object_msgs"/>
   <depend package="probability_msgs"/>
 
+  <depend package="tue_world_model"/>
+
 </package>
 
 

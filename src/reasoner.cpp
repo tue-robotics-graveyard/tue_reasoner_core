@@ -17,6 +17,7 @@
 
 #include <problib/conversions.h>
 
+#include <WorldModelROS.h>
 
 #include <vector>
 #include <string>
@@ -123,6 +124,8 @@ int main(int argc, char **argv) {
 	}
 
 	ros::ServiceServer service = nh_private.advertiseService("query", proccessQuery);
+
+	WorldModelROS wm;
 
 	ros::spin();
 
