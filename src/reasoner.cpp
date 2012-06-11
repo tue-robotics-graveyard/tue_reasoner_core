@@ -25,7 +25,10 @@ using namespace std;
 
 map<string, vector<Compound*> > facts_;
 
-void match(const Compound& C, vector<BindingSet*>& binding_sets) {
+void match(const vector<Compound*>& conjuncts, vector<BindingSet*>& binding_sets) {
+	Compound& C = **conjuncts.begin();
+	cout << "Matching against: " << C.toString() << endl << endl;
+
 	map<string, vector<Compound*> >::iterator it_fact_set = facts_.find(C.getPredicate());
 
 	if (it_fact_set != facts_.end()) {
@@ -78,13 +81,10 @@ bool proccessQuery(reasoning_srvs::Query::Request& req, reasoning_srvs::Query::R
 		conjuncts.push_back(msgToCompound(*it));
 	}
 
-	Compound& C = **conjuncts.begin();
-
-	cout << "Matching against: " << C.toString() << endl << endl;
-
 	vector<BindingSet*> binding_sets;
 
-	match(C, binding_sets);
+	match(conjuncts, binding_sets);
+
 	for(vector<BindingSet*>::iterator it = binding_sets.begin(); it != binding_sets.end(); ++it) {
 
 		reasoning_msgs::VariableBindingSet binding_set_msg;

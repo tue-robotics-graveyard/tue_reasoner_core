@@ -12,14 +12,14 @@ Compound::Compound(const std::string& predicate) : Term(COMPOUND), probability_(
 }
 
 Compound::Compound(const std::string& predicate, const std::vector<Term*>& arguments)
-	: Term(COMPOUND), probability_(1.0), predicate_(predicate) {
+: Term(COMPOUND), probability_(1.0), predicate_(predicate) {
 	for (std::vector<Term*>::const_iterator it = arguments.begin(); it != arguments.end(); ++it) {
 		arguments_.push_back(*it);
 	}
 }
 
 Compound::Compound(const Compound& orig)
-	: Term(orig), probability_(orig.probability_), predicate_(orig.predicate_), arguments_(orig.arguments_) {
+: Term(orig), probability_(orig.probability_), predicate_(orig.predicate_), arguments_(orig.arguments_) {
 
 }
 
@@ -67,10 +67,6 @@ BindingSet* Compound::match(const Term& term) const {
 
 			if (arg1->isValue() && arg2->isValue()) {
 				prob *= arg1->getValue()->getLikelihood(*arg2->getValue());
-				if (prob == 0) {
-					delete binding_set;
-					return 0;
-				}
 			} else {
 				Term* var;
 				Term* value;
@@ -87,8 +83,21 @@ BindingSet* Compound::match(const Term& term) const {
 					return 0;
 				}
 
-				binding_set->addBinding(var->getName(), value->getValue());
+				const pbl::PDF* var_value = binding_set->getBinding(var->getName());
+
+				if (!var_value) {
+					binding_set->addBinding(var->getName(), value->getValue());
+				} else {
+					prob *= value->getValue()->getLikelihood(*var_value);
+				}
 			}
+
+			if (prob == 0) {
+				delete binding_set;
+				return 0;
+			}
+
+
 		}
 	}
 

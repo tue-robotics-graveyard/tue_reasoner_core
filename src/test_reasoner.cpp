@@ -26,7 +26,7 @@ int main(int argc, char **argv) {
 	query.arguments.push_back(arg1);
 
 	reasoning_msgs::Argument arg2;
-	arg2.variable = "Y;";
+	arg2.variable = "X;";
 	//arg2.value.exact_value_str = "animal";
 	query.arguments.push_back(arg2);
 
