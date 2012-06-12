@@ -36,19 +36,30 @@ void predicate_isInstanceOf(const Compound& C, vector<BindingSet*>& binding_sets
 		printf("Predicate 'is-instance-of': 2nd argument (class name) must be given.\n");
 		return;
 	} else {
-		string className = "";
-		classTerm.getValue()->getExpectedValue(className);
-		if (className == "") {
-			return;
-		}
+		PropertySet P;
+		P.addProperty("class_label", *classTerm.getValue());
 
-		map<int, double> IDs;
-		world_model_->query("class_label", className, IDs);
+		vector<MHTObject<SemanticObject, Measurement>*> matches;
+		vector<double> probabilities;
+		world_model_->query(P, matches, probabilities);
 
 		if (instanceTerm.isVariable()) {
-			for(map<int, double>::iterator it_ID = IDs.begin(); it_ID != IDs.end(); ++it_ID) {
+			map<int, double> ID_to_prob;
+			for(unsigned int i = 0; i < matches.size(); ++i) {
+				if (probabilities[i] > 0.0001) {  // todo
+					int ID = matches[i]->getUserInfo().ID_;
+					map<int, double>::iterator it_ID = ID_to_prob.find(ID);
+					if (it_ID == ID_to_prob.end()) {
+						ID_to_prob[ID] = probabilities[i];
+					} else {
+						it_ID->second += probabilities[i];
+					}
+				}
+			}
+
+			for(map<int, double>::iterator it_ID = ID_to_prob.begin(); it_ID != ID_to_prob.end(); ++it_ID) {
 				stringstream ss;
-				ss << it_ID->first;
+				ss << "ID-" << it_ID->first;
 
 				pbl::PMF pmf;
 				pmf.setExact(ss.str());
@@ -63,10 +74,16 @@ void predicate_isInstanceOf(const Compound& C, vector<BindingSet*>& binding_sets
 			if (instanceTerm.getValue()->getExpectedValue(ID_str)) {
 				int ID = atoi(ID_str.c_str());
 
-				map<int, double>::iterator it_ID = IDs.find(ID);
-				if (it_ID != IDs.end()) {
+				double prob = 0;
+				for(unsigned int i = 0; i < matches.size(); ++i) {
+					if (ID == matches[i]->getUserInfo().ID_) {
+						prob += probabilities[i];
+					}
+				}
+
+				if (prob > 0) {
 					BindingSet* binding_set = new BindingSet();
-					binding_set->setProbability(it_ID->second);
+					binding_set->setProbability(prob);
 					binding_sets.push_back(binding_set);
 				}
 			}
