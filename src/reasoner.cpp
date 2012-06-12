@@ -28,6 +28,19 @@ map<string, vector<Compound*> > facts_;
 
 WorldModelROS* world_model_;
 
+string IDIntToString(int ID) {
+	stringstream ss;
+	ss << "ID-" << ID;
+	return ss.str();
+}
+
+int IDStringToInt(const string& ID) {
+	if(ID.substr(0, 3) == "ID-") {
+	    return atoi(ID.substr(3).c_str());
+	}
+	return -1;
+}
+
 void predicate_isInstanceOf(const Compound& C, vector<BindingSet*>& binding_sets) {
 	const Term& instanceTerm = C.getArgument(0);
 	const Term& classTerm = C.getArgument(1);
@@ -58,11 +71,8 @@ void predicate_isInstanceOf(const Compound& C, vector<BindingSet*>& binding_sets
 			}
 
 			for(map<int, double>::iterator it_ID = ID_to_prob.begin(); it_ID != ID_to_prob.end(); ++it_ID) {
-				stringstream ss;
-				ss << "ID-" << it_ID->first;
-
 				pbl::PMF pmf;
-				pmf.setExact(ss.str());
+				pmf.setExact(IDIntToString(it_ID->first));
 
 				BindingSet* binding_set = new BindingSet();
 				binding_set->addBinding(instanceTerm.getName(), pmf);
@@ -72,7 +82,7 @@ void predicate_isInstanceOf(const Compound& C, vector<BindingSet*>& binding_sets
 		} else {
 			string ID_str;
 			if (instanceTerm.getValue()->getExpectedValue(ID_str)) {
-				int ID = atoi(ID_str.c_str());
+				int ID = IDStringToInt(ID_str);
 
 				double prob = 0;
 				for(unsigned int i = 0; i < matches.size(); ++i) {

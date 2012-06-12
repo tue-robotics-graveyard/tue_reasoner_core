@@ -28,6 +28,7 @@ int main(int argc, char **argv) {
 
 	query.predicate = "is-instance-of";
 	arg1.variable = "X";
+	//arg1.value.exact_value_str = "ID-2";
 	arg2.value.exact_value_str = "cup";
 
 	/*
@@ -42,25 +43,31 @@ int main(int argc, char **argv) {
 	reasoning_srvs::Query srv;
 	srv.request.query.conjuncts.push_back(query);
 
-	for(int i = 0; i < 100; ++i) {
-
 	if (client.call(srv)) {
 
-		for(vector<reasoning_msgs::VariableBindingSet>::const_iterator it = srv.response.response.binding_sets.begin();
-				it != srv.response.response.binding_sets.end(); ++it) {
-			cout << "probability: " << it->probability << endl;
-			for(vector<reasoning_msgs::VariableBinding>::const_iterator it_b = it->bindings.begin(); it_b != it->bindings.end(); ++it_b) {
-				pbl::PDF* pdf = pbl::msgToPDF(it_b->value);
-				cout << it_b->variable << " = " << pdf->toString() << endl;
-				delete pdf;
+		if (!srv.response.response.binding_sets.empty()) {
+			for(vector<reasoning_msgs::VariableBindingSet>::const_iterator it = srv.response.response.binding_sets.begin();
+					it != srv.response.response.binding_sets.end(); ++it) {
+
+				if (it->bindings.empty()) {
+					 cout << "Yes (probability = " << it->probability << ")." << endl << endl;
+				} else {
+					cout << "=== probability: " << it->probability << " === " << endl;
+					for(vector<reasoning_msgs::VariableBinding>::const_iterator it_b = it->bindings.begin(); it_b != it->bindings.end(); ++it_b) {
+						pbl::PDF* pdf = pbl::msgToPDF(it_b->value);
+						cout << it_b->variable << " = " << pdf->toString() << endl;
+						delete pdf;
+					}
+					cout << endl;
+				}
 			}
-			cout << endl;
+		} else {
+			cout << "No." << endl << endl;
 		}
 
 	} else {
 		ROS_ERROR("Failed to call service /reasoner/query");
 		return 1;
-	}
 	}
 
 }
