@@ -3,5 +3,4 @@ is-in(table, kitchen) : 0.7
 is-a(coke_can, can)
 is-a(cow, animal) : 0.9
 is-a(teddy-bear, animal) : 0.1
-
 is-a(can, can) : 0.5

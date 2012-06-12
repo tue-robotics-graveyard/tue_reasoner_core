@@ -19,15 +19,15 @@ int main(int argc, char **argv) {
 	client.waitForExistence();
 
 	reasoning_msgs::Query query;
-	query.predicate = "is-a";
+	query.predicate = "is-instance-of";
 
 	reasoning_msgs::Argument arg1;
 	arg1.variable = "X;";
 	query.arguments.push_back(arg1);
 
 	reasoning_msgs::Argument arg2;
-	arg2.variable = "X;";
-	//arg2.value.exact_value_str = "animal";
+	//arg2.variable = "Y";
+	arg2.value.exact_value_str = "cup";
 	query.arguments.push_back(arg2);
 
 	// query: i-as(X, animal)

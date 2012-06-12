@@ -35,6 +35,8 @@ public:
 
 	std::string getPredicate() const;
 
+	const Term& getArgument(unsigned int i) const;
+
 	const std::vector<Term*>& getArguments() const;
 
 	std::string toString() const;

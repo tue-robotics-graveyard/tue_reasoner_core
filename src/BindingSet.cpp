@@ -12,19 +12,20 @@ BindingSet::BindingSet() : probability_(0) {
 }
 
 BindingSet::BindingSet(const BindingSet& orig) : probability_(orig.probability_), bindings_(orig.bindings_) {
-
 }
 
 BindingSet::~BindingSet() {
-
+	for(std::map<std::string, const pbl::PDF*>::const_iterator it = bindings_.begin(); it != bindings_.end(); ++it) {
+		delete it->second;
+	}
 }
 
 BindingSet* BindingSet::clone() const {
 	return new BindingSet(*this);
 }
 
-void BindingSet::addBinding(const std::string& variable_name, const pbl::PDF* pdf) {
-	bindings_[variable_name] = pdf;
+void BindingSet::addBinding(const std::string& variable_name, const pbl::PDF& pdf) {
+	bindings_[variable_name] = pdf.clone();
 }
 
 const pbl::PDF* BindingSet::getBinding(const std::string& variable_name) const {

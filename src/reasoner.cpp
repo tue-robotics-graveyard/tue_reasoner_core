@@ -26,8 +26,56 @@ using namespace std;
 
 map<string, vector<Compound*> > facts_;
 
-void match(const vector<Compound*>& conjuncts, vector<BindingSet*>& binding_sets) {
-	Compound& C = **conjuncts.begin();
+WorldModelROS* world_model_;
+
+void predicate_isInstanceOf(const Compound& C, vector<BindingSet*>& binding_sets) {
+	const Term& instanceTerm = C.getArgument(0);
+	const Term& classTerm = C.getArgument(1);
+
+	if (classTerm.isVariable()) {
+		printf("Predicate 'is-instance-of': 2nd argument (class name) must be given.\n");
+		return;
+	} else {
+		string className = "";
+		classTerm.getValue()->getExpectedValue(className);
+		if (className == "") {
+			return;
+		}
+
+		map<int, double> IDs;
+		world_model_->query("class_label", className, IDs);
+
+		if (instanceTerm.isVariable()) {
+			for(map<int, double>::iterator it_ID = IDs.begin(); it_ID != IDs.end(); ++it_ID) {
+				stringstream ss;
+				ss << it_ID->first;
+
+				pbl::PMF pmf;
+				pmf.setExact(ss.str());
+
+				BindingSet* binding_set = new BindingSet();
+				binding_set->addBinding(instanceTerm.getName(), pmf);
+				binding_set->setProbability(it_ID->second);
+				binding_sets.push_back(binding_set);
+			}
+		} else {
+			string ID_str;
+			if (instanceTerm.getValue()->getExpectedValue(ID_str)) {
+				int ID = atoi(ID_str.c_str());
+
+				map<int, double>::iterator it_ID = IDs.find(ID);
+				if (it_ID != IDs.end()) {
+					BindingSet* binding_set = new BindingSet();
+					binding_set->setProbability(it_ID->second);
+					binding_sets.push_back(binding_set);
+				}
+			}
+		}
+	}
+
+}
+
+void match(const Compound& C, vector<BindingSet*>& binding_sets) {
 	cout << "Matching against: " << C.toString() << endl << endl;
 
 	map<string, vector<Compound*> >::iterator it_fact_set = facts_.find(C.getPredicate());
@@ -84,7 +132,12 @@ bool proccessQuery(reasoning_srvs::Query::Request& req, reasoning_srvs::Query::R
 
 	vector<BindingSet*> binding_sets;
 
-	match(conjuncts, binding_sets);
+	Compound& C = **conjuncts.begin();
+	if (C.getPredicate() == "is-instance-of" && C.getArguments().size() == 2) {
+		predicate_isInstanceOf(C, binding_sets);
+	} else {
+		match(C, binding_sets);
+	}
 
 	for(vector<BindingSet*>::iterator it = binding_sets.begin(); it != binding_sets.end(); ++it) {
 
@@ -125,9 +178,11 @@ int main(int argc, char **argv) {
 
 	ros::ServiceServer service = nh_private.advertiseService("query", proccessQuery);
 
-	WorldModelROS wm;
+	world_model_ = new WorldModelROS();
 
 	ros::spin();
+
+	delete world_model_;
 
 	return 0;
 }

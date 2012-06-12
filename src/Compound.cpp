@@ -45,6 +45,10 @@ std::string Compound::getPredicate() const {
 	return predicate_;
 }
 
+const Term& Compound::getArgument(unsigned int i) const {
+	return *arguments_[i];
+}
+
 const std::vector<Term*>& Compound::getArguments() const {
 	return arguments_;
 }
@@ -86,7 +90,7 @@ BindingSet* Compound::match(const Term& term) const {
 				const pbl::PDF* var_value = binding_set->getBinding(var->getName());
 
 				if (!var_value) {
-					binding_set->addBinding(var->getName(), value->getValue());
+					binding_set->addBinding(var->getName(), *value->getValue());
 				} else {
 					prob *= value->getValue()->getLikelihood(*var_value);
 				}
