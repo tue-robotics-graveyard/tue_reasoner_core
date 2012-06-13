@@ -36,9 +36,55 @@ string IDIntToString(int ID) {
 
 int IDStringToInt(const string& ID) {
 	if(ID.substr(0, 3) == "ID-") {
-	    return atoi(ID.substr(3).c_str());
+		return atoi(ID.substr(3).c_str());
 	}
 	return -1;
+}
+
+void predicate_isInstanceAtCoordinates(const Compound& C, vector<BindingSet*>& binding_sets) {
+	const Term& instanceTerm = C.getArgument(0);
+	const Term& coordinatesTerm = C.getArgument(1);
+
+	if (instanceTerm.isVariable()) {
+		printf("Predicate 'is-instance-at-coordinates': 1st argument (instance ID) must be given.\n");
+		return;
+	}
+
+	if (!coordinatesTerm.isVariable()) {
+		printf("Predicate 'is-instance-at-coordinates': 2nd argument (coordinates) must be a variable.\n");
+		return;
+	}
+
+	string ID_str;
+	instanceTerm.getValue()->getExpectedValue(ID_str);
+	int ID = IDStringToInt(ID_str);
+	PropertySet P(ID);
+
+	vector<MHTObject<SemanticObject, Measurement>*> matches;
+	vector<double> probabilities;
+	world_model_->query(P, matches, probabilities);
+
+	for(unsigned int i = 0; i < matches.size(); ++i) {
+		cout << "i = " << i << endl;
+
+		const pbl::PDF& pdf_pos = matches[i]->getObject()->getContinuousProperty("position")->getPDF();
+
+		cout << pdf_pos.toString() << endl;
+
+		BindingSet* binding_set = new BindingSet();
+		binding_set->addBinding(coordinatesTerm.getName(), pdf_pos);
+		binding_set->setProbability(probabilities[i]);
+		binding_sets.push_back(binding_set);
+	}
+
+}
+
+void predicate_isInstanceAtRoom(const Compound& C, vector<BindingSet*>& binding_sets) {
+
+}
+
+void predicate_isClassAtRoom(const Compound& C, vector<BindingSet*>& binding_sets) {
+
 }
 
 void predicate_isInstanceOf(const Compound& C, vector<BindingSet*>& binding_sets) {
@@ -48,57 +94,58 @@ void predicate_isInstanceOf(const Compound& C, vector<BindingSet*>& binding_sets
 	if (classTerm.isVariable()) {
 		printf("Predicate 'is-instance-of': 2nd argument (class name) must be given.\n");
 		return;
-	} else {
-		PropertySet P;
-		P.addProperty("class_label", *classTerm.getValue());
+	}
 
-		vector<MHTObject<SemanticObject, Measurement>*> matches;
-		vector<double> probabilities;
-		world_model_->query(P, matches, probabilities);
+	PropertySet P;
+	P.addProperty("class_label", *classTerm.getValue());
 
-		if (instanceTerm.isVariable()) {
-			map<int, double> ID_to_prob;
-			for(unsigned int i = 0; i < matches.size(); ++i) {
-				if (probabilities[i] > 0.0001) {  // todo
-					int ID = matches[i]->getUserInfo().ID_;
-					map<int, double>::iterator it_ID = ID_to_prob.find(ID);
-					if (it_ID == ID_to_prob.end()) {
-						ID_to_prob[ID] = probabilities[i];
-					} else {
-						it_ID->second += probabilities[i];
-					}
-				}
-			}
+	vector<MHTObject<SemanticObject, Measurement>*> matches;
+	vector<double> probabilities;
+	world_model_->query(P, matches, probabilities);
 
-			for(map<int, double>::iterator it_ID = ID_to_prob.begin(); it_ID != ID_to_prob.end(); ++it_ID) {
-				pbl::PMF pmf;
-				pmf.setExact(IDIntToString(it_ID->first));
-
-				BindingSet* binding_set = new BindingSet();
-				binding_set->addBinding(instanceTerm.getName(), pmf);
-				binding_set->setProbability(it_ID->second);
-				binding_sets.push_back(binding_set);
-			}
-		} else {
-			string ID_str;
-			if (instanceTerm.getValue()->getExpectedValue(ID_str)) {
-				int ID = IDStringToInt(ID_str);
-
-				double prob = 0;
-				for(unsigned int i = 0; i < matches.size(); ++i) {
-					if (ID == matches[i]->getUserInfo().ID_) {
-						prob += probabilities[i];
-					}
-				}
-
-				if (prob > 0) {
-					BindingSet* binding_set = new BindingSet();
-					binding_set->setProbability(prob);
-					binding_sets.push_back(binding_set);
+	if (instanceTerm.isVariable()) {
+		map<int, double> ID_to_prob;
+		for(unsigned int i = 0; i < matches.size(); ++i) {
+			if (probabilities[i] > 0.0001) {  // todo
+				int ID = matches[i]->getUserInfo().ID_;
+				map<int, double>::iterator it_ID = ID_to_prob.find(ID);
+				if (it_ID == ID_to_prob.end()) {
+					ID_to_prob[ID] = probabilities[i];
+				} else {
+					it_ID->second += probabilities[i];
 				}
 			}
 		}
+
+		for(map<int, double>::iterator it_ID = ID_to_prob.begin(); it_ID != ID_to_prob.end(); ++it_ID) {
+			pbl::PMF pmf;
+			pmf.setExact(IDIntToString(it_ID->first));
+
+			BindingSet* binding_set = new BindingSet();
+			binding_set->addBinding(instanceTerm.getName(), pmf);
+			binding_set->setProbability(it_ID->second);
+			binding_sets.push_back(binding_set);
+		}
+	} else {
+		string ID_str;
+		if (instanceTerm.getValue()->getExpectedValue(ID_str)) {
+			int ID = IDStringToInt(ID_str);
+
+			double prob = 0;
+			for(unsigned int i = 0; i < matches.size(); ++i) {
+				if (ID == matches[i]->getUserInfo().ID_) {
+					prob += probabilities[i];
+				}
+			}
+
+			if (prob > 0) {
+				BindingSet* binding_set = new BindingSet();
+				binding_set->setProbability(prob);
+				binding_sets.push_back(binding_set);
+			}
+		}
 	}
+
 
 }
 
@@ -162,6 +209,12 @@ bool proccessQuery(reasoning_srvs::Query::Request& req, reasoning_srvs::Query::R
 	Compound& C = **conjuncts.begin();
 	if (C.getPredicate() == "is-instance-of" && C.getArguments().size() == 2) {
 		predicate_isInstanceOf(C, binding_sets);
+	} else if (C.getPredicate() == "is-instance-at-coordinates" && C.getArguments().size() == 2) {
+		predicate_isInstanceAtCoordinates(C, binding_sets);
+	} else if (C.getPredicate() == "is-instance-at-room" && C.getArguments().size() == 2) {
+		predicate_isInstanceAtRoom(C, binding_sets);
+	} else if (C.getPredicate() == "is-class-at-room" && C.getArguments().size() == 2) {
+		predicate_isClassAtRoom(C, binding_sets);
 	} else {
 		match(C, binding_sets);
 	}

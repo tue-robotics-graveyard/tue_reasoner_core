@@ -26,16 +26,21 @@ int main(int argc, char **argv) {
 	reasoning_msgs::Argument arg1;
 	reasoning_msgs::Argument arg2;
 
+	query.predicate = "is-instance-at-coordinates";
+	arg1.value.exact_value_str = "ID-2";
+	arg2.variable = "POS";
+
+	/*
 	query.predicate = "is-instance-of";
 	arg1.variable = "X";
-	//arg1.value.exact_value_str = "ID-2";
 	arg2.value.exact_value_str = "cup";
+	 */
 
 	/*
 	query.predicate = "is-a";
 	arg1.variable = "X";
 	arg2.variable = "Y";
-*/
+	 */
 
 	query.arguments.push_back(arg1);
 	query.arguments.push_back(arg2);
@@ -50,7 +55,7 @@ int main(int argc, char **argv) {
 					it != srv.response.response.binding_sets.end(); ++it) {
 
 				if (it->bindings.empty()) {
-					 cout << "Yes (probability = " << it->probability << ")." << endl << endl;
+					cout << "Yes (probability = " << it->probability << ")." << endl << endl;
 				} else {
 					cout << "=== probability: " << it->probability << " === " << endl;
 					for(vector<reasoning_msgs::VariableBinding>::const_iterator it_b = it->bindings.begin(); it_b != it->bindings.end(); ++it_b) {
