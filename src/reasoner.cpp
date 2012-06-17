@@ -28,6 +28,9 @@ map<string, vector<Compound*> > facts_;
 
 WorldModelROS* world_model_;
 
+// map from predicate names to function pointers
+map<string, void(*)(const Compound&, vector<BindingSet*>&)>  computable_predicates_;
+
 string IDIntToString(int ID) {
 	stringstream ss;
 	ss << "ID-" << ID;
@@ -39,6 +42,45 @@ int IDStringToInt(const string& ID) {
 		return atoi(ID.substr(3).c_str());
 	}
 	return -1;
+}
+
+// has-property(ID, ATTRIBUTE, VALUE)
+void predicate_hasProperty(const Compound& C, vector<BindingSet*>& binding_sets) {
+	const Term& idTerm = C.getArgument(0);
+	const Term& attributeTerm = C.getArgument(1);
+	const Term& valueTerm = C.getArgument(2);
+
+	if (idTerm.isVariable() || attributeTerm.isVariable() || !valueTerm.isVariable()) {
+		printf("Predicate 'has-property': 1st and 2nd argument (instance ID and attribute name) must be given, 3rd argument (value) must be a variable.\n");
+		return;
+	}
+
+	// determine ID
+	string ID_str;
+	idTerm.getValue()->getExpectedValue(ID_str);
+	int ID = IDStringToInt(ID_str);
+	PropertySet P(ID);
+
+	// determine attribute
+	string attribute;
+	attributeTerm.getValue()->getExpectedValue(attribute);
+
+	cout << "Querying for attribute '" << attribute << "' for object with ID " << ID << endl;
+
+	vector<MHTObject*> matches;
+	vector<double> probabilities;
+	world_model_->query(P, matches, probabilities);
+
+	cout << "Quering done" << endl;
+
+	for(unsigned int i = 0; i < matches.size(); ++i) {
+		const pbl::PDF& pdf = matches[i]->getObject()->getProperty(attribute)->getPDF();
+		BindingSet* binding_set = new BindingSet();
+		binding_set->addBinding(valueTerm.getName(), pdf);
+		binding_set->setProbability(probabilities[i]);
+		binding_sets.push_back(binding_set);
+	}
+
 }
 
 void predicate_isInstanceAtCoordinates(const Compound& C, vector<BindingSet*>& binding_sets) {
@@ -60,17 +102,12 @@ void predicate_isInstanceAtCoordinates(const Compound& C, vector<BindingSet*>& b
 	int ID = IDStringToInt(ID_str);
 	PropertySet P(ID);
 
-	vector<MHTObject<SemanticObject, Measurement>*> matches;
+	vector<MHTObject*> matches;
 	vector<double> probabilities;
 	world_model_->query(P, matches, probabilities);
 
 	for(unsigned int i = 0; i < matches.size(); ++i) {
-		cout << "i = " << i << endl;
-
-		const pbl::PDF& pdf_pos = matches[i]->getObject()->getContinuousProperty("position")->getPDF();
-
-		cout << pdf_pos.toString() << endl;
-
+		const pbl::PDF& pdf_pos = matches[i]->getObject()->getProperty("position")->getPDF();
 		BindingSet* binding_set = new BindingSet();
 		binding_set->addBinding(coordinatesTerm.getName(), pdf_pos);
 		binding_set->setProbability(probabilities[i]);
@@ -80,11 +117,11 @@ void predicate_isInstanceAtCoordinates(const Compound& C, vector<BindingSet*>& b
 }
 
 void predicate_isInstanceAtRoom(const Compound& C, vector<BindingSet*>& binding_sets) {
-
+	ROS_WARN("Predicate is-instance-at-room not yet implemented.");
 }
 
 void predicate_isClassAtRoom(const Compound& C, vector<BindingSet*>& binding_sets) {
-
+	ROS_WARN("Predicate is-class-at-room not yet implemented.");
 }
 
 void predicate_isInstanceOf(const Compound& C, vector<BindingSet*>& binding_sets) {
@@ -99,7 +136,7 @@ void predicate_isInstanceOf(const Compound& C, vector<BindingSet*>& binding_sets
 	PropertySet P;
 	P.addProperty("class_label", *classTerm.getValue());
 
-	vector<MHTObject<SemanticObject, Measurement>*> matches;
+	vector<MHTObject*> matches;
 	vector<double> probabilities;
 	world_model_->query(P, matches, probabilities);
 
@@ -145,7 +182,6 @@ void predicate_isInstanceOf(const Compound& C, vector<BindingSet*>& binding_sets
 			}
 		}
 	}
-
 
 }
 
@@ -207,14 +243,12 @@ bool proccessQuery(reasoning_srvs::Query::Request& req, reasoning_srvs::Query::R
 	vector<BindingSet*> binding_sets;
 
 	Compound& C = **conjuncts.begin();
-	if (C.getPredicate() == "is-instance-of" && C.getArguments().size() == 2) {
-		predicate_isInstanceOf(C, binding_sets);
-	} else if (C.getPredicate() == "is-instance-at-coordinates" && C.getArguments().size() == 2) {
-		predicate_isInstanceAtCoordinates(C, binding_sets);
-	} else if (C.getPredicate() == "is-instance-at-room" && C.getArguments().size() == 2) {
-		predicate_isInstanceAtRoom(C, binding_sets);
-	} else if (C.getPredicate() == "is-class-at-room" && C.getArguments().size() == 2) {
-		predicate_isClassAtRoom(C, binding_sets);
+	stringstream predicate_ss;
+	predicate_ss << C.getPredicate() << "/" << C.getArguments().size();
+
+	map<string, void(*)(const Compound&, vector<BindingSet*>&)>::iterator it_computable = computable_predicates_.find(predicate_ss.str());
+	if (it_computable != computable_predicates_.end()) {
+		it_computable->second(C, binding_sets);
 	} else {
 		match(C, binding_sets);
 	}
@@ -255,6 +289,12 @@ int main(int argc, char **argv) {
 	if (!P.parse(facts_, parse_error)) {
 		ROS_ERROR_STREAM("Error(s) while parsing " << db_filename << ": " << endl << parse_error.str());
 	}
+
+	computable_predicates_["is-instance-of/2"] = &predicate_isInstanceOf;
+	computable_predicates_["is-instance-at-coordinates/2"] = &predicate_isInstanceAtCoordinates;
+	computable_predicates_["is-instance-at-room/2"] = &predicate_isInstanceAtRoom;
+	computable_predicates_["is-class-at-room/2"] = &predicate_isClassAtRoom;
+	computable_predicates_["has-property/3"] = &predicate_hasProperty;
 
 	ros::ServiceServer service = nh_private.advertiseService("query", proccessQuery);
 

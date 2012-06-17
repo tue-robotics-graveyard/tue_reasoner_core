@@ -25,16 +25,26 @@ int main(int argc, char **argv) {
 	reasoning_msgs::Query query;
 	reasoning_msgs::Argument arg1;
 	reasoning_msgs::Argument arg2;
+	//reasoning_msgs::Argument arg3;
+
+	/*
+	query.predicate = "has-property";
+	arg1.value.exact_value_str = "ID-2";
+	arg2.value.exact_value_str = "class_label";
+	arg3.variable = "X";
+*/
+
 
 	query.predicate = "is-instance-at-coordinates";
 	arg1.value.exact_value_str = "ID-2";
 	arg2.variable = "POS";
 
-	/*
+
+/*
 	query.predicate = "is-instance-of";
 	arg1.variable = "X";
 	arg2.value.exact_value_str = "cup";
-	 */
+*/
 
 	/*
 	query.predicate = "is-a";
@@ -44,6 +54,7 @@ int main(int argc, char **argv) {
 
 	query.arguments.push_back(arg1);
 	query.arguments.push_back(arg2);
+	//query.arguments.push_back(arg3);
 
 	reasoning_srvs::Query srv;
 	srv.request.query.conjuncts.push_back(query);
