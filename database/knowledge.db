@@ -4,3 +4,5 @@ is-a(coke_can, can)
 is-a(cow, animal) : 0.9
 is-a(teddy-bear, animal) : 0.1
 is-a(can, can) : 0.5
+
+is-class-at-coordinates(coke, [0.1, 0.4, 1.3]) : 0.9

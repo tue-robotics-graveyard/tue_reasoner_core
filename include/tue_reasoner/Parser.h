@@ -21,6 +21,7 @@
 #include "tue_reasoner/Value.h"
 
 #include <problib/pdfs/PMF.h>
+#include <problib/pdfs/Gaussian.h>
 
 class Parser {
 public:
@@ -33,6 +34,8 @@ public:
 protected:
 
 	std::string filename_;
+
+	void parseList(const std::string& str, std::vector<std::string>& args, std::string& error);
 
 	Compound* parseCompound(const std::string& line, std::string& error);
 
