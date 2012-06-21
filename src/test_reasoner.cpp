@@ -34,17 +34,17 @@ int main(int argc, char **argv) {
 	arg3.variable = "X";
 */
 
-
+/*
 	query.predicate = "is-instance-at-coordinates";
 	arg1.value.exact_value_str = "ID-2";
 	arg2.variable = "POS";
+*/
 
 
-/*
 	query.predicate = "is-instance-of";
 	arg1.variable = "X";
 	arg2.value.exact_value_str = "cup";
-*/
+
 
 	/*
 	query.predicate = "is-a";
