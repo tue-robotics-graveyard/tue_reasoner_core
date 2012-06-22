@@ -2,7 +2,7 @@
 #                  TAXONOMY
 ################################################
 
-# places
+# locations
 is-subclass-of(sofa, seat)
 is-subclass-of(couch_table, table)
 is-subclass-of(armchair, seat)
@@ -72,6 +72,7 @@ is-class-at-coordinates(waste_bin, [3.370, 2.451, 0.000])
 is-class-at-coordinates(bed, [2.813, -4.956, 0.000])
 is-class-at-coordinates(side_table, [3.597, -6.213, 0.000])
 is-class-at-coordinates(footstool, [0.465, -6.569, 0.000])
+is-class-at-coordinates(exit, [-0.369, 0.073, 0.000])
 
 ################################################
 #              SEMANTIC LOCATIONS
