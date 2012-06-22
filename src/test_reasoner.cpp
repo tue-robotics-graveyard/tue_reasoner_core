@@ -40,17 +40,22 @@ int main(int argc, char **argv) {
 	arg2.variable = "POS";
 */
 
+	/*
+	query.predicate = "is-class-at-coordinates";
+	arg1.value.exact_value_str = "coke";
+	arg2.variable = "POS";
+	*/
 
+/*
 	query.predicate = "is-instance-of";
 	arg1.variable = "X";
 	arg2.value.exact_value_str = "cup";
+*/
 
-
-	/*
-	query.predicate = "is-a";
+	query.predicate = "is-subclass-of";
 	arg1.variable = "X";
-	arg2.variable = "Y";
-	 */
+	//arg2.variable = "Y";
+	arg2.value.exact_value_str = "seat";
 
 	query.arguments.push_back(arg1);
 	query.arguments.push_back(arg2);

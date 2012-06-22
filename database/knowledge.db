@@ -1,8 +1,61 @@
-is-in(cup, kitchen) : 0.5
-is-in(table, kitchen) : 0.7
-is-a(coke_can, can)
-is-a(cow, animal) : 0.9
-is-a(teddy-bear, animal) : 0.1
-is-a(can, can) : 0.5
+#is-class-at-coordinates(coke, [0.1, 0.4, 1.3]) : 0.5
+#is-class-at-coordinates(coke, [2, 2.4, 5]) : 0.3
 
-is-class-at-coordinates(coke, [0.1, 0.4, 1.3]) : 0.9
+
+
+is-subclass-of(sofa, seat)
+is-subclass-of(couch_table, table)
+is-subclass-of(armchair, seat)
+is-subclass-of(stool, seat)
+is-subclass-of(dinner_table, table)
+is-subclass-of(bookshelf, shelf)
+is-subclass-of(buffet, shelf)
+is-subclass-of(fridge, appliance)
+is-subclass-of(stove, appliance)
+is-subclass-of(microwave, appliance)
+is-subclass-of(kitchen_table, table)
+is-subclass-of(bar, shelf)
+is-subclass-of(couch, seat)
+is-subclass-of(sideboard, shelf)
+is-subclass-of(waste_bin, bin)
+is-subclass-of(bed, seat)
+is-subclass-of(side_table, table)
+is-subclass-of(footstool, seat)
+
+has-property(couch_table, object_holder)
+has-property(dinner_table, object_holder)
+has-property(bookshelf, object_holder)
+has-property(buffet, object_holder)
+has-property(fridge, object_holder)
+has-property(microwave, object_holder)
+has-property(kitchen_table, object_holder)
+has-property(bar, object_holder)
+has-property(sideboard, object_holder)
+has-property(bed, object_holder)
+has-property(side_table, object_holder)
+
+# living room
+is-class-in-room(sofa, living_room)
+is-class-in-room(couch_table, living_room)
+is-class-in-room(armchair, living_room)
+is-class-in-room(stool, living_room)
+is-class-in-room(dinner_table, living_room)
+is-class-in-room(bookshelf, living_room)
+is-class-in-room(buffet, living_room)
+
+# kitchen
+is-class-in-room(fridge, kitchen)
+is-class-in-room(stove, kitchen)
+is-class-in-room(microwave, kitchen)
+is-class-in-room(kitchen_table, kitchen)
+is-class-in-room(bar, kitchen)
+
+# lobby
+is-class-in-room(couch, lobby)
+is-class-in-room(sideboard, lobby)
+is-class-in-room(waste_bin, lobby)
+
+# bed_room
+is-class-in-room(bed, bed_room)
+is-class-in-room(side_table, bed_room)
+is-class-in-room(footstool, bed_room)
