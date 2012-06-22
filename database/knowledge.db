@@ -1,7 +1,21 @@
-#is-class-at-coordinates(coke, [0.1, 0.4, 1.3]) : 0.5
-#is-class-at-coordinates(coke, [2, 2.4, 5]) : 0.3
-
-
+is-class-at-coordinates(sofa, [9.065, 0.490, 0.000])
+is-class-at-coordinates(couch_table, [7.374, 0.674, 0.000])
+is-class-at-coordinates(armchair, [7.346, 2.195, 0.000])
+is-class-at-coordinates(stool, [6.224, 0.684, 0.000]) : 0.5
+is-class-at-coordinates(dinner_table, [6.653, -2.691, 0.000])
+is-class-at-coordinates(bookshelf, [9.040, -1.281, 0.000])
+is-class-at-coordinates(buffet, [4.689, -1.281, 0.000])
+is-class-at-coordinates(fridge, [8.676, -6.172, 0.000])
+is-class-at-coordinates(stove, [7.358, -7.075, 0.000])
+is-class-at-coordinates(microwave, [6.457, -7.096, 0.000])
+is-class-at-coordinates(kitchen_table, [7.210, -4.001, 0.000])
+is-class-at-coordinates(bar, [5.260, -5.461, 0.000])
+is-class-at-coordinates(couch, [2.287, 2.539, 0.000])
+is-class-at-coordinates(sideboard, [2.252, -1.503, 0.000])
+is-class-at-coordinates(waste_bin, [3.370, 2.451, 0.000])
+is-class-at-coordinates(bed, [2.813, -4.956, 0.000])
+is-class-at-coordinates(side_table, [3.597, -6.213, 0.000])
+is-class-at-coordinates(footstool, [0.465, -6.569, 0.000])
 
 is-subclass-of(sofa, seat)
 is-subclass-of(couch_table, table)
