@@ -52,10 +52,11 @@ int main(int argc, char **argv) {
 	arg2.value.exact_value_str = "cup";
 */
 
-	query.predicate = "is-subclass-of";
-	arg1.variable = "X";
-	//arg2.variable = "Y";
-	arg2.value.exact_value_str = "seat";
+	query.predicate = "is-class-at-coordinates";
+	//arg1.variable = "X";
+	arg1.value.exact_value_str = "bar";
+	arg2.variable = "Y";
+	//arg2.value.exact_value_str = "seat";
 
 	query.arguments.push_back(arg1);
 	query.arguments.push_back(arg2);
