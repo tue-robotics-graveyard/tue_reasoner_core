@@ -1,22 +1,8 @@
-is-class-at-coordinates(sofa, [9.065, 0.490, 0.000])
-is-class-at-coordinates(couch_table, [7.374, 0.674, 0.000])
-is-class-at-coordinates(armchair, [7.346, 2.195, 0.000])
-is-class-at-coordinates(stool, [6.224, 0.684, 0.000]) : 0.5
-is-class-at-coordinates(dinner_table, [6.653, -2.691, 0.000])
-is-class-at-coordinates(bookshelf, [9.040, -1.281, 0.000])
-is-class-at-coordinates(buffet, [4.689, -1.281, 0.000])
-is-class-at-coordinates(fridge, [8.676, -6.172, 0.000])
-is-class-at-coordinates(stove, [7.358, -7.075, 0.000])
-is-class-at-coordinates(microwave, [6.457, -7.096, 0.000])
-is-class-at-coordinates(kitchen_table, [7.210, -4.001, 0.000])
-is-class-at-coordinates(bar, [5.260, -5.461, 0.000])
-is-class-at-coordinates(couch, [2.287, 2.539, 0.000])
-is-class-at-coordinates(sideboard, [2.252, -1.503, 0.000])
-is-class-at-coordinates(waste_bin, [3.370, 2.451, 0.000])
-is-class-at-coordinates(bed, [2.813, -4.956, 0.000])
-is-class-at-coordinates(side_table, [3.597, -6.213, 0.000])
-is-class-at-coordinates(footstool, [0.465, -6.569, 0.000])
+################################################
+#                  TAXONOMY
+################################################
 
+# places
 is-subclass-of(sofa, seat)
 is-subclass-of(couch_table, table)
 is-subclass-of(armchair, seat)
@@ -36,17 +22,60 @@ is-subclass-of(bed, seat)
 is-subclass-of(side_table, table)
 is-subclass-of(footstool, seat)
 
-has-property(couch_table, object_holder)
-has-property(dinner_table, object_holder)
-has-property(bookshelf, object_holder)
-has-property(buffet, object_holder)
-has-property(fridge, object_holder)
-has-property(microwave, object_holder)
-has-property(kitchen_table, object_holder)
-has-property(bar, object_holder)
-has-property(sideboard, object_holder)
-has-property(bed, object_holder)
-has-property(side_table, object_holder)
+# objects
+is-subclass-of(coke, drinks)
+is-subclass-of(seven_up, drinks)
+is-subclass-of(lemon_tea, drinks)
+is-subclass-of(pepsi, drinks)
+is-subclass-of(mineral_water, drinks)
+is-subclass-of(gatorade, drinks)
+is-subclass-of(orange_juice, drinks)
+is-subclass-of(apple_juice, drinks)
+is-subclass-of(crackers, snacks)
+is-subclass-of(wafer, snacks)
+is-subclass-of(candy, snacks)
+is-subclass-of(cookies, snacks)
+is-subclass-of(chili, food)
+is-subclass-of(dough, food)
+is-subclass-of(tomato_sauce, food)
+is-subclass-of(soy_sauce, food)
+is-subclass-of(tofu, food)
+is-subclass-of(tea_box, food)
+is-subclass-of(cotton, bathroom_stuff)
+is-subclass-of(disinfectant, bathroom_stuff)
+is-subclass-of(hair_gel, bathroom_stuff)
+is-subclass-of(soap, bathroom_stuff)
+is-subclass-of(tooth_paste, bathroom_stuff)
+is-subclass-of(toilet_paper, bathroom_stuff)
+is-subclass-of(shampoo, bathroom_stuff)
+is-subclass-of(pad, bathroom_stuff)
+
+################################################
+#                  COORDINATES
+################################################
+
+is-class-at-coordinates(sofa, [9.065, 0.490, 0.000])
+is-class-at-coordinates(couch_table, [7.374, 0.674, 0.000])
+is-class-at-coordinates(armchair, [7.346, 2.195, 0.000])
+is-class-at-coordinates(stool, [6.224, 0.684, 0.000])
+is-class-at-coordinates(dinner_table, [6.653, -2.691, 0.000])
+is-class-at-coordinates(bookshelf, [9.040, -1.281, 0.000])
+is-class-at-coordinates(buffet, [4.689, -1.281, 0.000])
+is-class-at-coordinates(fridge, [8.676, -6.172, 0.000])
+is-class-at-coordinates(stove, [7.358, -7.075, 0.000])
+is-class-at-coordinates(microwave, [6.457, -7.096, 0.000])
+is-class-at-coordinates(kitchen_table, [7.210, -4.001, 0.000])
+is-class-at-coordinates(bar, [5.260, -5.461, 0.000])
+is-class-at-coordinates(couch, [2.287, 2.539, 0.000])
+is-class-at-coordinates(sideboard, [2.252, -1.503, 0.000])
+is-class-at-coordinates(waste_bin, [3.370, 2.451, 0.000])
+is-class-at-coordinates(bed, [2.813, -4.956, 0.000])
+is-class-at-coordinates(side_table, [3.597, -6.213, 0.000])
+is-class-at-coordinates(footstool, [0.465, -6.569, 0.000])
+
+################################################
+#              SEMANTIC LOCATIONS
+################################################
 
 # living room
 is-class-in-room(sofa, living_room)
@@ -73,3 +102,20 @@ is-class-in-room(waste_bin, lobby)
 is-class-in-room(bed, bed_room)
 is-class-in-room(side_table, bed_room)
 is-class-in-room(footstool, bed_room)
+
+################################################
+#               OTHER PROPERTIES
+################################################
+
+has-property(couch_table, object_holder)
+has-property(dinner_table, object_holder)
+has-property(bookshelf, object_holder)
+has-property(buffet, object_holder)
+has-property(fridge, object_holder)
+has-property(microwave, object_holder)
+has-property(kitchen_table, object_holder)
+has-property(bar, object_holder)
+has-property(sideboard, object_holder)
+has-property(bed, object_holder)
+has-property(side_table, object_holder)
+
