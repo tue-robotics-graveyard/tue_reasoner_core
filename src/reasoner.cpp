@@ -299,6 +299,7 @@ int main(int argc, char **argv) {
 	ros::ServiceServer service = nh_private.advertiseService("query", proccessQuery);
 
 	world_model_ = new WorldModelROS();
+	world_model_->registerEvidenceTopic("/world_evidence");
 
 	ros::spin();
 
