@@ -211,18 +211,18 @@ void match(const Compound& C, vector<BindingSet*>& binding_sets) {
 	}
 }
 
-Compound* msgToCompound(const reasoning_msgs::Query& msg) {
-	Compound* C = new Compound(msg.predicate);
+Compound msgToCompound(const reasoning_msgs::Query& msg) {
+	Compound C(msg.predicate);
 
 	for(vector<reasoning_msgs::Argument>::const_iterator it = msg.arguments.begin(); it != msg.arguments.end(); ++it) {
 		if (it->variable != "") {
 			// argument is a variable
-			C->addArgument(Variable(it->variable));
+			C.addArgument(Variable(it->variable));
 		} else {
 			// argument is a value
 			pbl::PDF* pdf = pbl::msgToPDF(it->value);
 			if (pdf) {
-				C->addArgument(Value(*pdf));
+				C.addArgument(Value(*pdf));
 				delete pdf;
 			}
 		}
@@ -262,7 +262,7 @@ PlCompound msgToProlog(const reasoning_msgs::Query& msg, map<string, PlTerm>& st
 				C->addArgument(Value(*pdf));
 				delete pdf;
 			}
-			*/
+			 */
 		}
 	}
 
@@ -280,48 +280,40 @@ bool proccessQuery(reasoning_srvs::Query::Request& req, reasoning_srvs::Query::R
 		ROS_WARN("Reasoner can currently only process single queries (not conjunctions of queries).");
 	}
 
-	vector<Compound*> conjuncts;
-
-	for(vector<reasoning_msgs::Query>::const_iterator it = req.query.conjuncts.begin(); it != req.query.conjuncts.end(); ++it) {
-		conjuncts.push_back(msgToCompound(*it));
-	}
-
 	vector<BindingSet*> binding_sets;
 
-	Compound& C = **conjuncts.begin();
-	stringstream predicate_ss;
-	predicate_ss << C.getPredicate() << "/" << C.getArguments().size();
+	for(vector<reasoning_msgs::Query>::const_iterator it = req.query.conjuncts.begin(); it != req.query.conjuncts.end(); ++it) {
+		const reasoning_msgs::Query& term_msg = *it;
 
-	map<string, void(*)(const Compound&, vector<BindingSet*>&)>::iterator it_computable = computable_predicates_.find(predicate_ss.str());
-	if (it_computable != computable_predicates_.end()) {
-		it_computable->second(C, binding_sets);
-	} else {
+		stringstream predicate_ss;
+		predicate_ss << term_msg.predicate << "/" << term_msg.arguments.size();
 
-		PlTermv av(1);
+		map<string, void(*)(const Compound&, vector<BindingSet*>&)>::iterator it_computable = computable_predicates_.find(predicate_ss.str());
+		if (it_computable != computable_predicates_.end()) {
+			it_computable->second(msgToCompound(term_msg), binding_sets);
+		} else {
+			PlTermv av(1);
 
-		map<string, PlTerm> str_to_var;
-		PlTail goal_list(av[0]);
-		for(vector<reasoning_msgs::Query>::const_iterator it = req.query.conjuncts.begin(); it != req.query.conjuncts.end(); ++it) {
+			map<string, PlTerm> str_to_var;
+			PlTail goal_list(av[0]);
 			goal_list.append(msgToProlog(*it, str_to_var));
-		}
-		goal_list.close();
-		cout << (char*)av[0] << endl;
+			goal_list.close();
 
-		try {
-			//PlCall("listing", PlTermv(0));
-			PlQuery q("complex_query", av);
-			while( q.next_solution() ) {
-				BindingSet* binding_set = new BindingSet();
-				binding_set->setProbability(1.0);
-				for(map<string, PlTerm>::iterator it = str_to_var.begin(); it != str_to_var.end(); ++it) {
-					pbl::PMF pmf;
-					pmf.setExact((char *)it->second);
-					binding_set->addBinding(it->first, pmf);
+			try {
+				PlQuery q("complex_query", av);
+				while( q.next_solution() ) {
+					BindingSet* binding_set = new BindingSet();
+					binding_set->setProbability(1.0);
+					for(map<string, PlTerm>::iterator it = str_to_var.begin(); it != str_to_var.end(); ++it) {
+						pbl::PMF pmf;
+						pmf.setExact((char *)it->second);
+						binding_set->addBinding(it->first, pmf);
+					}
+					binding_sets.push_back(binding_set);
 				}
-				binding_sets.push_back(binding_set);
+			} catch ( PlException &ex ) {
+				std::cerr << (char *)ex << std::endl;
 			}
-		} catch ( PlException &ex ) {
-			std::cerr << (char *)ex << std::endl;
 		}
 
 	}
@@ -340,10 +332,6 @@ bool proccessQuery(reasoning_srvs::Query::Request& req, reasoning_srvs::Query::R
 
 		}
 		res.response.binding_sets.push_back(binding_set_msg);
-	}
-
-	for(vector<Compound*>::iterator it = conjuncts.begin(); it != conjuncts.end(); ++it) {
-		delete *it;
 	}
 
 	return true;
@@ -367,7 +355,7 @@ int main(int argc, char **argv) {
 	if (!P.parse(facts_, parse_error)) {
 		ROS_ERROR_STREAM("Error(s) while parsing " << db_filename << ": " << endl << parse_error.str());
 	}
-	*/
+	 */
 
 	// load the knowledge base into prolog
 	PlTermv filename_term(db_filename.c_str());
