@@ -25,7 +25,7 @@ int main(int argc, char **argv) {
 	reasoning_msgs::Query query;
 	reasoning_msgs::Argument arg1;
 	reasoning_msgs::Argument arg2;
-	//reasoning_msgs::Argument arg3;
+	reasoning_msgs::Argument arg3;
 
 	/*
 	query.predicate = "has-property";
@@ -52,15 +52,14 @@ int main(int argc, char **argv) {
 	arg2.value.exact_value_str = "cup";
 */
 
-	query.predicate = "is_subclass_of";
-	arg1.variable = "X";
-	//arg1.value.exact_value_str = "ID-0";
-	//arg2.variable = "Y";
-	arg2.value.exact_value_str = "seat";
+	query.predicate = "has_property";
+	arg1.value.exact_value_str = "id_1";
+	arg2.value.exact_value_str = "position";
+	arg3.variable = "X";
 
 	query.arguments.push_back(arg1);
 	query.arguments.push_back(arg2);
-	//query.arguments.push_back(arg3);
+	query.arguments.push_back(arg3);
 
 	reasoning_srvs::Query srv;
 	srv.request.query.conjuncts.push_back(query);

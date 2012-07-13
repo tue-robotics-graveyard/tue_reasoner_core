@@ -35,15 +35,43 @@ map<string, void(*)(const Compound&, vector<BindingSet*>&)>  computable_predicat
 
 string IDIntToString(int ID) {
 	stringstream ss;
-	ss << "id-" << ID;
+	ss << "id_" << ID;
 	return ss.str();
 }
 
 int IDStringToInt(const string& ID) {
-	if(ID.substr(0, 3) == "id-") {
+	if(ID.substr(0, 3) == "id_") {
 		return atoi(ID.substr(3).c_str());
 	}
 	return -1;
+}
+
+PREDICATE(hello, 1) {
+	cout << "Hello " << (char *)A1 << endl;
+	return TRUE;
+}
+
+PREDICATE(comp_property, 3) {
+	int ID = IDStringToInt((char*)A1);
+	PropertySet P(ID);
+
+	string attribute = (char*)A2;
+
+	cout << "Querying for attribute '" << attribute << "' for object with ID " << ID << endl;
+
+	vector<MHTObject*> matches;
+	vector<double> probabilities;
+	world_model_->query(P, matches, probabilities);
+
+	cout << "Quering done" << endl;
+
+	PlTail results(A3);
+	for(unsigned int i = 0; i < matches.size(); ++i) {
+		const pbl::PDF& pdf = matches[i]->getObject()->getProperty(attribute)->getPDF();
+		results.append(PlCompound("pdf", PlTerm((long)(&pdf))));
+	}
+	results.close();
+	return TRUE;
 }
 
 // has-property(ID, ATTRIBUTE, VALUE)
@@ -254,19 +282,25 @@ PlCompound msgToProlog(const reasoning_msgs::Query& msg, map<string, PlTerm>& st
 			if (arg_msg.value.exact_value_str != "") {
 				args_prolog[i] = arg_msg.value.exact_value_str.c_str();
 			} else {
-				ROS_WARN("Currently cannot deal with non-exact, non-string pdfs.");
+				pbl::PDF* pdf = pbl::msgToPDF(arg_msg.value);
+				args_prolog[i] = PlCompound("pdf", PlTerm(pdf));
 			}
-			/*
-			pbl::PDF* pdf = pbl::msgToPDF(it->value);
-			if (pdf) {
-				C->addArgument(Value(*pdf));
-				delete pdf;
-			}
-			 */
 		}
 	}
-
 	return PlCompound(msg.predicate.c_str(), args_prolog);
+}
+
+BindingSet* prologToBindingSet(const map<string, PlTerm>& str_to_var) {
+	BindingSet* binding_set = new BindingSet();
+
+	binding_set->setProbability(1.0);
+	for(map<string, PlTerm>::const_iterator it = str_to_var.begin(); it != str_to_var.end(); ++it) {
+		pbl::PMF pmf;
+		pmf.setExact((char *)it->second);
+		binding_set->addBinding(it->first, pmf);
+	}
+
+	return binding_set;
 }
 
 bool proccessQuery(reasoning_srvs::Query::Request& req, reasoning_srvs::Query::Response& res) {
@@ -302,14 +336,7 @@ bool proccessQuery(reasoning_srvs::Query::Request& req, reasoning_srvs::Query::R
 			try {
 				PlQuery q("complex_query", av);
 				while( q.next_solution() ) {
-					BindingSet* binding_set = new BindingSet();
-					binding_set->setProbability(1.0);
-					for(map<string, PlTerm>::iterator it = str_to_var.begin(); it != str_to_var.end(); ++it) {
-						pbl::PMF pmf;
-						pmf.setExact((char *)it->second);
-						binding_set->addBinding(it->first, pmf);
-					}
-					binding_sets.push_back(binding_set);
+					binding_sets.push_back(prologToBindingSet(str_to_var));
 				}
 			} catch ( PlException &ex ) {
 				std::cerr << (char *)ex << std::endl;
@@ -374,7 +401,7 @@ int main(int argc, char **argv) {
 	computable_predicates_["is_instance_at_coordinates/2"] = &predicate_isInstanceAtCoordinates;
 	computable_predicates_["is_instance_at_room/2"] = &predicate_isInstanceAtRoom;
 	computable_predicates_["is_class_at_room/2"] = &predicate_isClassAtRoom;
-	computable_predicates_["has_property/3"] = &predicate_hasProperty;
+	//computable_predicates_["has_property/3"] = &predicate_hasProperty;
 
 	ros::ServiceServer service = nh_private.advertiseService("query", proccessQuery);
 

@@ -138,6 +138,11 @@ has_property(sideboard, object_holder).
 has_property(bed, object_holder).
 has_property(side_table, object_holder).
 
+has_property(id_1, position, test).
+has_property(id_1, position, test2).
+has_property(X, Y, Z) :-
+	comp_property(X, Y, Z).
+
 % TODO: get rid of complex_query
 complex_query([]).
 complex_query([H|T]) :-
