@@ -52,11 +52,11 @@ int main(int argc, char **argv) {
 	arg2.value.exact_value_str = "cup";
 */
 
-	query.predicate = "is-class-at-coordinates";
+	query.predicate = "is-instance-of";
 	//arg1.variable = "X";
-	arg1.value.exact_value_str = "bar";
-	arg2.variable = "Y";
-	//arg2.value.exact_value_str = "seat";
+	arg1.value.exact_value_str = "ID-0";
+	//arg2.variable = "Y";
+	arg2.value.exact_value_str = "coke";
 
 	query.arguments.push_back(arg1);
 	query.arguments.push_back(arg2);

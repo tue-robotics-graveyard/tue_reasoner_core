@@ -27,6 +27,9 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #rosbuild_add_boost_directories()
 #rosbuild_link_boost(${PROJECT_NAME} thread)
 
+include_directories(${PROJECT_SOURCE_DIR}/3rdparty)
+include_directories(/usr/lib/swi-prolog/include)
+
 rosbuild_add_executable(reasoner src/Value.cpp
 								 src/Term.cpp
 								 src/Variable.cpp
@@ -34,7 +37,10 @@ rosbuild_add_executable(reasoner src/Value.cpp
 								 src/BindingSet.cpp
 								 src/Parser.cpp
 								 src/reasoner.cpp)
-								 
+target_link_libraries(reasoner swipl)
+
 rosbuild_add_executable(test_reasoner src/test_reasoner.cpp)								 
 
-#target_link_libraries(example ${PROJECT_NAME})
+rosbuild_add_executable(test_swi src/test_swi.cpp)
+target_link_libraries(test_swi swipl)
+

@@ -22,6 +22,9 @@
 #include <vector>
 #include <string>
 
+#include "/usr/lib/swi-prolog/include/SWI-Prolog.h"
+//#include "SWI-cpp.h"
+
 using namespace std;
 
 map<string, vector<Compound*> > facts_;
@@ -100,6 +103,12 @@ void predicate_isInstanceAtCoordinates(const Compound& C, vector<BindingSet*>& b
 	string ID_str;
 	instanceTerm.getValue()->getExpectedValue(ID_str);
 	int ID = IDStringToInt(ID_str);
+
+	if (ID < 0) {
+		printf("Predicate 'is-instance-at-coordinates': 1st argument (instance ID) is malformed (should be of format: ID-#).\n");
+		return;
+	}
+
 	PropertySet P(ID);
 
 	vector<MHTObject*> matches;
