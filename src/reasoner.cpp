@@ -22,8 +22,7 @@
 #include <vector>
 #include <string>
 
-#include "/usr/lib/swi-prolog/include/SWI-Prolog.h"
-//#include "SWI-cpp.h"
+#include "swi-cpp/SWI-cpp.h"
 
 using namespace std;
 
@@ -36,12 +35,12 @@ map<string, void(*)(const Compound&, vector<BindingSet*>&)>  computable_predicat
 
 string IDIntToString(int ID) {
 	stringstream ss;
-	ss << "ID-" << ID;
+	ss << "id-" << ID;
 	return ss.str();
 }
 
 int IDStringToInt(const string& ID) {
-	if(ID.substr(0, 3) == "ID-") {
+	if(ID.substr(0, 3) == "id-") {
 		return atoi(ID.substr(3).c_str());
 	}
 	return -1;
@@ -232,6 +231,44 @@ Compound* msgToCompound(const reasoning_msgs::Query& msg) {
 	return C;
 }
 
+PlCompound msgToProlog(const reasoning_msgs::Query& msg, map<string, PlTerm>& str_to_var) {
+	PlTermv args_prolog(msg.arguments.size());
+
+	for(unsigned int i = 0; i < msg.arguments.size(); ++i) {
+
+		const reasoning_msgs::Argument& arg_msg = msg.arguments[i];
+
+		if (arg_msg.variable != "") {
+			// argument is a variable
+
+			map<string, PlTerm>::iterator it_var = str_to_var.find(arg_msg.variable);
+			if (it_var != str_to_var.end()) {
+				// known variable
+				args_prolog[i] = it_var->second;
+			} else {
+				// unknown variable, so add to map
+				str_to_var[arg_msg.variable] = args_prolog[i];
+			}
+		} else {
+			// argument is a value
+			if (arg_msg.value.exact_value_str != "") {
+				args_prolog[i] = arg_msg.value.exact_value_str.c_str();
+			} else {
+				ROS_WARN("Currently cannot deal with non-exact, non-string pdfs.");
+			}
+			/*
+			pbl::PDF* pdf = pbl::msgToPDF(it->value);
+			if (pdf) {
+				C->addArgument(Value(*pdf));
+				delete pdf;
+			}
+			*/
+		}
+	}
+
+	return PlCompound(msg.predicate.c_str(), args_prolog);
+}
+
 bool proccessQuery(reasoning_srvs::Query::Request& req, reasoning_srvs::Query::Response& res) {
 
 	if (req.query.conjuncts.empty()) {
@@ -259,7 +296,34 @@ bool proccessQuery(reasoning_srvs::Query::Request& req, reasoning_srvs::Query::R
 	if (it_computable != computable_predicates_.end()) {
 		it_computable->second(C, binding_sets);
 	} else {
-		match(C, binding_sets);
+
+		PlTermv av(1);
+
+		map<string, PlTerm> str_to_var;
+		PlTail goal_list(av[0]);
+		for(vector<reasoning_msgs::Query>::const_iterator it = req.query.conjuncts.begin(); it != req.query.conjuncts.end(); ++it) {
+			goal_list.append(msgToProlog(*it, str_to_var));
+		}
+		goal_list.close();
+		cout << (char*)av[0] << endl;
+
+		try {
+			//PlCall("listing", PlTermv(0));
+			PlQuery q("complex_query", av);
+			while( q.next_solution() ) {
+				BindingSet* binding_set = new BindingSet();
+				binding_set->setProbability(1.0);
+				for(map<string, PlTerm>::iterator it = str_to_var.begin(); it != str_to_var.end(); ++it) {
+					pbl::PMF pmf;
+					pmf.setExact((char *)it->second);
+					binding_set->addBinding(it->first, pmf);
+				}
+				binding_sets.push_back(binding_set);
+			}
+		} catch ( PlException &ex ) {
+			std::cerr << (char *)ex << std::endl;
+		}
+
 	}
 
 	for(vector<BindingSet*>::iterator it = binding_sets.begin(); it != binding_sets.end(); ++it) {
@@ -290,20 +354,39 @@ int main(int argc, char **argv) {
 	ros::init(argc, argv, "reasoner");
 	ros::NodeHandle nh_private("~");
 
+	// Initialize Prolog Engine
+	putenv("SWI_HOME_DIR=/usr/lib/swi-prolog");
+	PlEngine prolog_engine(argv[0]);
+
 	string db_filename = "";
 	nh_private.getParam("database_filename", db_filename);
 
+	/*
 	Parser P(db_filename);
 	stringstream parse_error;
 	if (!P.parse(facts_, parse_error)) {
 		ROS_ERROR_STREAM("Error(s) while parsing " << db_filename << ": " << endl << parse_error.str());
 	}
+	*/
 
-	computable_predicates_["is-instance-of/2"] = &predicate_isInstanceOf;
-	computable_predicates_["is-instance-at-coordinates/2"] = &predicate_isInstanceAtCoordinates;
-	computable_predicates_["is-instance-at-room/2"] = &predicate_isInstanceAtRoom;
-	computable_predicates_["is-class-at-room/2"] = &predicate_isClassAtRoom;
-	computable_predicates_["has-property/3"] = &predicate_hasProperty;
+	// load the knowledge base into prolog
+	PlTermv filename_term(db_filename.c_str());
+	PlQuery q_consult("consult", filename_term);
+	try {
+		if (!q_consult.next_solution()) {
+			ROS_ERROR("Failed to parse knowledge file: %s", db_filename.c_str());
+			return 0;
+		}
+	} catch ( PlException &ex ) {
+		std::cerr << (char *)ex << std::endl;
+		return 0;
+	}
+
+	computable_predicates_["is_instance_of/2"] = &predicate_isInstanceOf;
+	computable_predicates_["is_instance_at_coordinates/2"] = &predicate_isInstanceAtCoordinates;
+	computable_predicates_["is_instance_at_room/2"] = &predicate_isInstanceAtRoom;
+	computable_predicates_["is_class_at_room/2"] = &predicate_isClassAtRoom;
+	computable_predicates_["has_property/3"] = &predicate_hasProperty;
 
 	ros::ServiceServer service = nh_private.advertiseService("query", proccessQuery);
 

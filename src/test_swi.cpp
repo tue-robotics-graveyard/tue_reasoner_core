@@ -10,7 +10,6 @@ int main(int argc, char **argv) {
 	PlEngine e(argv[0]);
 
 	PlTermv file(PlAtom("/home/sdries/ros/tue/dev/sjoerd/tue_reasoner/3rdparty/swi-cpp/reasoner.pl"));
-
 	PlQuery q_consult("consult", file);
 	try {
 		if (!q_consult.next_solution()) return 0;
