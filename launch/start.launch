@@ -2,7 +2,9 @@
 
 <launch>
 
-    <node pkg="tue_reasoner" type="reasoner" respawn="false" name="reasoner" output="screen">
+    <arg name="args" /> 
+
+    <node pkg="tue_reasoner" type="reasoner" args="$(arg args)" respawn="false" name="reasoner" output="screen">
         <param name="database_filename" value="$(find tue_reasoner)/database/knowledge.pl"/>   
         
         <!-- World model parameters -->

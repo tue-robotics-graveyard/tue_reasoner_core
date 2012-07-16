@@ -52,14 +52,26 @@ int main(int argc, char **argv) {
 	arg2.value.exact_value_str = "cup";
 */
 
+	/*
 	query.predicate = "has_property";
 	arg1.value.exact_value_str = "id_1";
 	arg2.value.exact_value_str = "position";
 	arg3.variable = "X";
+	*/
+
+	/*
+	query.predicate = "owl_subclass_of";
+	arg1.variable = "A";
+	//arg2.variable = "B";
+	arg2.value.exact_value_str = "http://ias.cs.tum.edu/kb/knowrob.owl#FoodOrDrink";
+	 */
+	//visualisation_canvas(C).
+	query.predicate = "visualisation_canvas";
+	arg1.variable = "C";
 
 	query.arguments.push_back(arg1);
-	query.arguments.push_back(arg2);
-	query.arguments.push_back(arg3);
+	//query.arguments.push_back(arg2);
+	//query.arguments.push_back(arg3);
 
 	reasoning_srvs::Query srv;
 	srv.request.query.conjuncts.push_back(query);

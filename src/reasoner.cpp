@@ -371,7 +371,8 @@ int main(int argc, char **argv) {
 
 	// Initialize Prolog Engine
 	putenv("SWI_HOME_DIR=/usr/lib/swi-prolog");
-	PlEngine prolog_engine(argv[0]);
+	//PlEngine prolog_engine(argv[0]);
+	PlEngine prolog_engine(argc, argv);
 
 	string db_filename = "";
 	nh_private.getParam("database_filename", db_filename);
