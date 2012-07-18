@@ -16,6 +16,16 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 #set the default path for built libraries to the "lib" directory
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
+# Must have <SWI-Prolog.h>
+INCLUDE(CheckIncludeFiles)
+CHECK_INCLUDE_FILES ("/usr/lib/swi-prolog/include/SWI-Prolog.h" HAVE_SWI_PROLOG_H)
+if(HAVE_SWI_PROLOG_H)
+  message(STATUS "<SWI-Prolog.h> found")
+  INCLUDE_DIRECTORIES("/usr/lib/swi-prolog/include/")
+else(HAVE_SWI_PROLOG_H)
+  message(FATAL_ERROR "Can't proceed without <SWI-Prolog.h>")
+endif(HAVE_SWI_PROLOG_H)
+
 #uncomment if you have defined messages
 #rosbuild_genmsg()
 #uncomment if you have defined services
@@ -27,8 +37,8 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #rosbuild_add_boost_directories()
 #rosbuild_link_boost(${PROJECT_NAME} thread)
 
+# include swi-cpp (C++ wrapper for Prolog C-functions)
 include_directories(${PROJECT_SOURCE_DIR}/3rdparty)
-include_directories(/usr/lib/swi-prolog/include)
 
 rosbuild_add_executable(reasoner src/Value.cpp
 								 src/Term.cpp
