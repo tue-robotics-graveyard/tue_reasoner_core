@@ -66,11 +66,12 @@ int main(int argc, char **argv) {
 	arg2.value.exact_value_str = "http://ias.cs.tum.edu/kb/knowrob.owl#FoodOrDrink";
 	 */
 	//visualisation_canvas(C).
-	query.predicate = "visualisation_canvas";
-	arg1.variable = "C";
+	query.predicate = "is_class_in_room";
+	arg1.variable = "A";
+	arg2.variable = "B";
 
 	query.arguments.push_back(arg1);
-	//query.arguments.push_back(arg2);
+	query.arguments.push_back(arg2);
 	//query.arguments.push_back(arg3);
 
 	reasoning_srvs::Query srv;

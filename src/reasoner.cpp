@@ -161,63 +161,89 @@ void predicate_isClassAtRoom(const Compound& C, vector<BindingSet*>& binding_set
 }
 
 void predicate_isInstanceOf(const Compound& C, vector<BindingSet*>& binding_sets) {
+	cout << "predicate_isInstanceOf" << endl;
+
 	const Term& instanceTerm = C.getArgument(0);
 	const Term& classTerm = C.getArgument(1);
 
-	if (classTerm.isVariable()) {
-		printf("Predicate 'is-instance-of': 2nd argument (class name) must be given.\n");
-		return;
+	PropertySet P;
+
+	string query_class_label = "";
+	if (classTerm.isValue()) {
+		if (classTerm.getValue()->getExpectedValue(query_class_label)) {
+			P.addProperty("class_label", *classTerm.getValue());
+		}
 	}
 
-	PropertySet P;
-	P.addProperty("class_label", *classTerm.getValue());
+	int query_id = -1;
+	if (instanceTerm.isValue()) {
+		string id_str;
+		if (instanceTerm.getValue()->getExpectedValue(id_str)) {
+			query_id = IDStringToInt(id_str);
+		}
+	}
 
 	vector<MHTObject*> matches;
 	vector<double> probabilities;
 	world_model_->query(P, matches, probabilities);
 
-	if (instanceTerm.isVariable()) {
-		map<int, double> ID_to_prob;
-		for(unsigned int i = 0; i < matches.size(); ++i) {
-			if (probabilities[i] > 0.0001) {  // todo
-				int ID = matches[i]->getUserInfo().ID_;
-				map<int, double>::iterator it_ID = ID_to_prob.find(ID);
-				if (it_ID == ID_to_prob.end()) {
-					ID_to_prob[ID] = probabilities[i];
+	map<int, map<string, double> > id_to_class_to_prob;
+	for(unsigned int i = 0; i < matches.size(); ++i) {
+		if (probabilities[i] > 0.0001) {  // todo
+
+			int obj_id = matches[i]->getUserInfo().ID_;
+
+			string obj_class_label;
+			matches[i]->getObject()->getProperty("class_label")->getPDF().getExpectedValue(obj_class_label);
+
+			if ((instanceTerm.isVariable() || obj_id == query_id)
+					&& (classTerm.isVariable() || obj_class_label == query_class_label)) {
+				cout << "    MATCH" << endl;
+
+				map<string, double>* p_class_to_prob = 0;
+				map<int, map<string, double> >::iterator it_class_to_prob = id_to_class_to_prob.find(obj_id);
+				if (it_class_to_prob == id_to_class_to_prob.end()) {
+					p_class_to_prob = &id_to_class_to_prob[obj_id];
 				} else {
-					it_ID->second += probabilities[i];
+					p_class_to_prob = &it_class_to_prob->second;
 				}
-			}
-		}
 
-		for(map<int, double>::iterator it_ID = ID_to_prob.begin(); it_ID != ID_to_prob.end(); ++it_ID) {
-			pbl::PMF pmf;
-			pmf.setExact(IDIntToString(it_ID->first));
-
-			BindingSet* binding_set = new BindingSet();
-			binding_set->addBinding(instanceTerm.getName(), pmf);
-			binding_set->setProbability(it_ID->second);
-			binding_sets.push_back(binding_set);
-		}
-	} else {
-		string ID_str;
-		if (instanceTerm.getValue()->getExpectedValue(ID_str)) {
-			int ID = IDStringToInt(ID_str);
-
-			double prob = 0;
-			for(unsigned int i = 0; i < matches.size(); ++i) {
-				if (ID == matches[i]->getUserInfo().ID_) {
-					prob += probabilities[i];
+				map<string, double>::iterator it_class = p_class_to_prob->find(obj_class_label);
+				if (it_class == p_class_to_prob->end()) {
+					(*p_class_to_prob)[obj_class_label] = probabilities[i];
+				} else {
+					it_class->second += probabilities[i];
 				}
 			}
 
-			if (prob > 0) {
-				BindingSet* binding_set = new BindingSet();
-				binding_set->setProbability(prob);
-				binding_sets.push_back(binding_set);
-			}
+			cout << endl;
 		}
 	}
+
+	for(map<int, map<string, double> >::iterator it_class_to_prob = id_to_class_to_prob.begin(); it_class_to_prob != id_to_class_to_prob.end(); ++it_class_to_prob) {
+		const map<string, double>& class_to_prob = it_class_to_prob->second;
+		for(map<string, double>::const_iterator it_class = class_to_prob.begin(); it_class != class_to_prob.end(); ++it_class) {
+			BindingSet* binding_set = new BindingSet();
+
+			if (instanceTerm.isVariable()) {
+				pbl::PMF pmf;
+				pmf.setExact(IDIntToString(it_class_to_prob->first));
+				binding_set->addBinding(instanceTerm.getName(), pmf);
+				cout << "binding id:    " << pmf.toString() << endl;
+			}
+
+			if (classTerm.isVariable()) {
+				pbl::PMF pmf;
+				pmf.setExact(it_class->first);
+				binding_set->addBinding(classTerm.getName(), pmf);
+				cout << "binding class: " << pmf.toString() << endl;
+			}
+
+			binding_set->setProbability(it_class->second);
+			binding_sets.push_back(binding_set);
+		}
+	}
+
 
 }
 
@@ -314,6 +340,8 @@ bool proccessQuery(reasoning_srvs::Query::Request& req, reasoning_srvs::Query::R
 		ROS_WARN("Reasoner can currently only process single queries (not conjunctions of queries).");
 	}
 
+	cout << "Request: " << req.query << endl;
+
 	vector<BindingSet*> binding_sets;
 
 	for(vector<reasoning_msgs::Query>::const_iterator it = req.query.conjuncts.begin(); it != req.query.conjuncts.end(); ++it) {
@@ -360,6 +388,8 @@ bool proccessQuery(reasoning_srvs::Query::Request& req, reasoning_srvs::Query::R
 		}
 		res.response.binding_sets.push_back(binding_set_msg);
 	}
+
+	cout << res.response << endl;
 
 	return true;
 }
