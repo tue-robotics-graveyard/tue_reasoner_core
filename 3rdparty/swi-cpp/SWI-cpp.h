@@ -124,7 +124,7 @@ public:
 					/* Compounds */
   PlTerm operator [](int index) const;
   int arity();
-  const char *name();
+  const char *name() const;
 
 					/* UNIFY */
   int operator =(const PlTerm &t2);	/* term */
@@ -684,7 +684,7 @@ PlTerm::arity()
 
 
 __inline const char *
-PlTerm::name()
+PlTerm::name() const
 { atom_t name;
   int arity;
 

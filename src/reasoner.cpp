@@ -198,8 +198,6 @@ void predicate_isInstanceOf(const Compound& C, vector<BindingSet*>& binding_sets
 
 			if ((instanceTerm.isVariable() || obj_id == query_id)
 					&& (classTerm.isVariable() || obj_class_label == query_class_label)) {
-				cout << "    MATCH" << endl;
-
 				map<string, double>* p_class_to_prob = 0;
 				map<int, map<string, double> >::iterator it_class_to_prob = id_to_class_to_prob.find(obj_id);
 				if (it_class_to_prob == id_to_class_to_prob.end()) {
@@ -321,9 +319,36 @@ BindingSet* prologToBindingSet(const map<string, PlTerm>& str_to_var) {
 
 	binding_set->setProbability(1.0);
 	for(map<string, PlTerm>::const_iterator it = str_to_var.begin(); it != str_to_var.end(); ++it) {
-		pbl::PMF pmf;
-		pmf.setExact((char *)it->second);
-		binding_set->addBinding(it->first, pmf);
+
+		const PlTerm& term = it->second;
+
+
+		if ((string)term.name() == ".") {
+
+			vector<double> vec;
+
+			PlTail list(term);
+
+			PlTerm e;
+			while(list.next(e)) {
+				vec.push_back((double)e);
+			}
+
+			pbl::Vector mu(vec.size());
+			for(unsigned int i = 0; i < vec.size(); ++i) {
+				mu(i) = vec[i];
+			}
+
+			binding_set->addBinding(it->first, pbl::Gaussian(mu, arma::zeros(vec.size(), vec.size())));
+		} else {
+			pbl::PMF pmf;
+			pmf.setExact(term.name());
+			binding_set->addBinding(it->first, pmf);
+		}
+
+		//pmf.setExact((char *)it->second);
+
+
 	}
 
 	return binding_set;
