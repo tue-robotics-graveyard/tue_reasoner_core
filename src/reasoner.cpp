@@ -414,7 +414,7 @@ bool proccessQuery(reasoning_srvs::Query::Request& req, reasoning_srvs::Query::R
 		res.response.binding_sets.push_back(binding_set_msg);
 	}
 
-	cout << res.response << endl;
+	//cout << res.response << endl;
 
 	return true;
 }
