@@ -40,13 +40,19 @@ endif(HAVE_SWI_PROLOG_H)
 # include swi-cpp (C++ wrapper for Prolog C-functions)
 include_directories(${PROJECT_SOURCE_DIR}/3rdparty)
 
+# to show include files in Qt Creator
+file(GLOB_RECURSE INCLUDE_FILES include/*.h)
+
 rosbuild_add_executable(reasoner src/Value.cpp
 								 src/Term.cpp
 								 src/Variable.cpp
 								 src/Compound.cpp
 								 src/BindingSet.cpp
 								 src/Parser.cpp
-								 src/reasoner.cpp)
+                                                                 src/reasoner.cpp
+                                                                 ${INCLUDE_FILES}
+)
+
 target_link_libraries(reasoner swipl)
 
 rosbuild_add_executable(test_reasoner src/test_reasoner.cpp)								 

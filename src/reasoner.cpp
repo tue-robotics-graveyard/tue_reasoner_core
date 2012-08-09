@@ -18,6 +18,10 @@
 #include <problib/conversions.h>
 
 #include <WorldModelROS.h>
+#include <mht_old/MHTObject.h>
+#include <storage/SemanticObject.h>
+#include <core/PropertySet.h>
+#include <core/Property.h>
 
 #include <vector>
 #include <string>
@@ -59,7 +63,7 @@ PREDICATE(comp_property, 3) {
 
 	cout << "Querying for attribute '" << attribute << "' for object with ID " << ID << endl;
 
-	vector<MHTObject*> matches;
+    vector<mhf::MHTObject*> matches;
 	vector<double> probabilities;
 	world_model_->query(P, matches, probabilities);
 
@@ -67,7 +71,7 @@ PREDICATE(comp_property, 3) {
 
 	PlTail results(A3);
 	for(unsigned int i = 0; i < matches.size(); ++i) {
-		const pbl::PDF& pdf = matches[i]->getObject()->getProperty(attribute)->getPDF();
+        const pbl::PDF& pdf = matches[i]->getObject()->getProperty(attribute)->getValue();
 		results.append(PlCompound("pdf", PlTerm((long)(&pdf))));
 	}
 	results.close();
@@ -76,7 +80,10 @@ PREDICATE(comp_property, 3) {
 
 // has-property(ID, ATTRIBUTE, VALUE)
 void predicate_hasProperty(const Compound& C, vector<BindingSet*>& binding_sets) {
-	const Term& idTerm = C.getArgument(0);
+
+    ros::Time current_time = ros::Time::now();
+
+    const Term& idTerm = C.getArgument(0);
 	const Term& attributeTerm = C.getArgument(1);
 	const Term& valueTerm = C.getArgument(2);
 
@@ -97,19 +104,23 @@ void predicate_hasProperty(const Compound& C, vector<BindingSet*>& binding_sets)
 
 	cout << "Querying for attribute '" << attribute << "' for object with ID " << ID << endl;
 
-	vector<MHTObject*> matches;
+    vector<mhf::MHTObject*> matches;
 	vector<double> probabilities;
 	world_model_->query(P, matches, probabilities);
 
 	cout << "Quering done" << endl;
 
 	for(unsigned int i = 0; i < matches.size(); ++i) {
-		const pbl::PDF& pdf = matches[i]->getObject()->getProperty(attribute)->getPDF();
-		BindingSet* binding_set = new BindingSet();
-		binding_set->addBinding(valueTerm.getName(), pdf);
-		binding_set->setProbability(probabilities[i]);
-		binding_sets.push_back(binding_set);
+		if (matches[i]->getObject()->getProperty(attribute)) {		
+            const pbl::PDF& pdf = matches[i]->getObject()->getProperty(attribute)->getValue();
+			BindingSet* binding_set = new BindingSet();
+			binding_set->addBinding(valueTerm.getName(), pdf);
+			binding_set->setProbability(probabilities[i]);
+			binding_sets.push_back(binding_set);
+		}
 	}
+
+    cout << "Predicate has_property took " << (ros::Time::now().toSec() - current_time.toSec()) << "seconds" << endl;
 
 }
 
@@ -138,12 +149,12 @@ void predicate_isInstanceAtCoordinates(const Compound& C, vector<BindingSet*>& b
 
 	PropertySet P(ID);
 
-	vector<MHTObject*> matches;
+    vector<mhf::MHTObject*> matches;
 	vector<double> probabilities;
 	world_model_->query(P, matches, probabilities);
 
 	for(unsigned int i = 0; i < matches.size(); ++i) {
-		const pbl::PDF& pdf_pos = matches[i]->getObject()->getProperty("position")->getPDF();
+        const pbl::PDF& pdf_pos = matches[i]->getObject()->getProperty("position")->getValue();
 		BindingSet* binding_set = new BindingSet();
 		binding_set->addBinding(coordinatesTerm.getName(), pdf_pos);
 		binding_set->setProbability(probabilities[i]);
@@ -168,7 +179,7 @@ void predicate_isInstanceOf(const Compound& C, vector<BindingSet*>& binding_sets
 
 	PropertySet P;
 
-	string query_class_label = "";
+    string query_class_label = "";
 	if (classTerm.isValue()) {
 		if (classTerm.getValue()->getExpectedValue(query_class_label)) {
 			P.addProperty("class_label", *classTerm.getValue());
@@ -183,7 +194,7 @@ void predicate_isInstanceOf(const Compound& C, vector<BindingSet*>& binding_sets
 		}
 	}
 
-	vector<MHTObject*> matches;
+    vector<mhf::MHTObject*> matches;
 	vector<double> probabilities;
 	world_model_->query(P, matches, probabilities);
 
@@ -194,7 +205,7 @@ void predicate_isInstanceOf(const Compound& C, vector<BindingSet*>& binding_sets
 			int obj_id = matches[i]->getUserInfo().ID_;
 
 			string obj_class_label;
-			matches[i]->getObject()->getProperty("class_label")->getPDF().getExpectedValue(obj_class_label);
+            matches[i]->getObject()->getProperty("class_label")->getValue().getExpectedValue(obj_class_label);
 
 			if ((instanceTerm.isVariable() || obj_id == query_id)
 					&& (classTerm.isVariable() || obj_class_label == query_class_label)) {
@@ -356,6 +367,8 @@ BindingSet* prologToBindingSet(const map<string, PlTerm>& str_to_var) {
 
 bool proccessQuery(reasoning_srvs::Query::Request& req, reasoning_srvs::Query::Response& res) {
 
+    ros::Time current_time = ros::Time::now();
+
 	if (req.query.conjuncts.empty()) {
 		ROS_ERROR("Empty received empty query");
 		return false;
@@ -416,6 +429,8 @@ bool proccessQuery(reasoning_srvs::Query::Request& req, reasoning_srvs::Query::R
 
 	//cout << res.response << endl;
 
+    cout << "Reasoner: query took " << (ros::Time::now().toSec() - current_time.toSec()) << "seconds" << endl;
+
 	return true;
 }
 
@@ -425,7 +440,7 @@ int main(int argc, char **argv) {
 	ros::NodeHandle nh_private("~");
 
 	// Initialize Prolog Engine
-	putenv("SWI_HOME_DIR=/usr/lib/swi-prolog");
+    putenv("SWI_HOME_DIR=/usr/lib/swi-prolog");
 	//PlEngine prolog_engine(argv[0]);
 	PlEngine prolog_engine(argc, argv);
 
@@ -457,7 +472,7 @@ int main(int argc, char **argv) {
 	computable_predicates_["is_instance_at_coordinates/2"] = &predicate_isInstanceAtCoordinates;
 	computable_predicates_["is_instance_at_room/2"] = &predicate_isInstanceAtRoom;
 	computable_predicates_["is_class_at_room/2"] = &predicate_isClassAtRoom;
-	//computable_predicates_["has_property/3"] = &predicate_hasProperty;
+	computable_predicates_["has_property/3"] = &predicate_hasProperty;
 
 	ros::ServiceServer service = nh_private.advertiseService("query", proccessQuery);
 
