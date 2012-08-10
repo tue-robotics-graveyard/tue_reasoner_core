@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
 	arg2.value.exact_value_str = "http://ias.cs.tum.edu/kb/knowrob.owl#FoodOrDrink";
 	 */
 	//visualisation_canvas(C).
-	query.predicate = "is_class_in_room";
+	query.predicate = "is_instance_of";
 	arg1.variable = "A";
 	arg2.variable = "B";
 
@@ -77,7 +77,12 @@ int main(int argc, char **argv) {
 	reasoning_srvs::Query srv;
 	srv.request.query.conjuncts.push_back(query);
 
+
+    ros::Time current_time = ros::Time::now();
+
 	if (client.call(srv)) {
+
+        cout << "test_reasoner: query took " << (ros::Time::now().toSec() - current_time.toSec()) << "seconds" << endl;
 
 		if (!srv.response.response.binding_sets.empty()) {
 			for(vector<reasoning_msgs::VariableBindingSet>::const_iterator it = srv.response.response.binding_sets.begin();

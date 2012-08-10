@@ -28,6 +28,8 @@
 
 #include "swi-cpp/SWI-cpp.h"
 
+#define WM_DEV
+
 using namespace std;
 
 map<string, vector<Compound*> > facts_;
@@ -71,7 +73,11 @@ PREDICATE(comp_property, 3) {
 
 	PlTail results(A3);
 	for(unsigned int i = 0; i < matches.size(); ++i) {
+#ifdef WM_DEV
         const pbl::PDF& pdf = matches[i]->getObject()->getProperty(attribute)->getValue();
+#else
+        const pbl::PDF& pdf = matches[i]->getObject()->getProperty(attribute)->getPDF();
+#endif
 		results.append(PlCompound("pdf", PlTerm((long)(&pdf))));
 	}
 	results.close();
@@ -112,7 +118,13 @@ void predicate_hasProperty(const Compound& C, vector<BindingSet*>& binding_sets)
 
 	for(unsigned int i = 0; i < matches.size(); ++i) {
 		if (matches[i]->getObject()->getProperty(attribute)) {		
+
+#ifdef WM_DEV
             const pbl::PDF& pdf = matches[i]->getObject()->getProperty(attribute)->getValue();
+#else
+            const pbl::PDF& pdf = matches[i]->getObject()->getProperty(attribute)->getPDF();
+#endif
+
 			BindingSet* binding_set = new BindingSet();
 			binding_set->addBinding(valueTerm.getName(), pdf);
 			binding_set->setProbability(probabilities[i]);
@@ -154,7 +166,14 @@ void predicate_isInstanceAtCoordinates(const Compound& C, vector<BindingSet*>& b
 	world_model_->query(P, matches, probabilities);
 
 	for(unsigned int i = 0; i < matches.size(); ++i) {
+
+
+#ifdef WM_DEV
         const pbl::PDF& pdf_pos = matches[i]->getObject()->getProperty("position")->getValue();
+#else
+        const pbl::PDF& pdf_pos = matches[i]->getObject()->getProperty("position")->getPDF();
+#endif
+
 		BindingSet* binding_set = new BindingSet();
 		binding_set->addBinding(coordinatesTerm.getName(), pdf_pos);
 		binding_set->setProbability(probabilities[i]);
@@ -204,8 +223,13 @@ void predicate_isInstanceOf(const Compound& C, vector<BindingSet*>& binding_sets
 
 			int obj_id = matches[i]->getUserInfo().ID_;
 
-			string obj_class_label;
-            matches[i]->getObject()->getProperty("class_label")->getValue().getExpectedValue(obj_class_label);
+			string obj_class_label;          
+
+#ifdef WM_DEV
+      matches[i]->getObject()->getProperty("class_label")->getValue().getExpectedValue(obj_class_label);
+#else
+        matches[i]->getObject()->getProperty("class_label")->getPDF().getExpectedValue(obj_class_label);
+#endif
 
 			if ((instanceTerm.isVariable() || obj_id == query_id)
 					&& (classTerm.isVariable() || obj_class_label == query_class_label)) {
@@ -367,7 +391,8 @@ BindingSet* prologToBindingSet(const map<string, PlTerm>& str_to_var) {
 
 bool proccessQuery(reasoning_srvs::Query::Request& req, reasoning_srvs::Query::Response& res) {
 
-    ros::Time current_time = ros::Time::now();
+    timespec t_start, t_end;
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t_start);
 
 	if (req.query.conjuncts.empty()) {
 		ROS_ERROR("Empty received empty query");
@@ -424,12 +449,13 @@ bool proccessQuery(reasoning_srvs::Query::Request& req, reasoning_srvs::Query::R
 			binding_set_msg.bindings.push_back(binding_msg);
 
 		}
-		res.response.binding_sets.push_back(binding_set_msg);
+        res.response.binding_sets.push_back(binding_set_msg);
 	}
 
-	//cout << res.response << endl;
+    //cout << res.response << endl;
 
-    cout << "Reasoner: query took " << (ros::Time::now().toSec() - current_time.toSec()) << "seconds" << endl;
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t_end);
+    printf("Reasoner: query took  %f seconds.\n", (t_end.tv_sec - t_start.tv_sec) + double(t_end.tv_nsec - t_start.tv_nsec) / 1e9);
 
 	return true;
 }
