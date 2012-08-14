@@ -468,18 +468,11 @@ int main(int argc, char **argv) {
 	// Initialize Prolog Engine
     putenv("SWI_HOME_DIR=/usr/lib/swi-prolog");
 	//PlEngine prolog_engine(argv[0]);
-	PlEngine prolog_engine(argc, argv);
+
+    PlEngine prolog_engine(argc, argv);
 
 	string db_filename = "";
 	nh_private.getParam("database_filename", db_filename);
-
-	/*
-	Parser P(db_filename);
-	stringstream parse_error;
-	if (!P.parse(facts_, parse_error)) {
-		ROS_ERROR_STREAM("Error(s) while parsing " << db_filename << ": " << endl << parse_error.str());
-	}
-	 */
 
 	// load the knowledge base into prolog
 	PlTermv filename_term(db_filename.c_str());
@@ -505,7 +498,9 @@ int main(int argc, char **argv) {
 	world_model_ = new WorldModelROS();
 	world_model_->registerEvidenceTopic("/world_evidence");
 
-	ros::spin();
+    world_model_->startThreaded();
+
+    ros::spin();
 
 	delete world_model_;
 
