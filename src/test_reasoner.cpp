@@ -13,6 +13,18 @@
 
 using namespace std;
 
+reasoning_msgs::Argument varArgument(const string& var) {
+    reasoning_msgs::Argument arg;
+    arg.variable = var;
+    return arg;
+}
+
+reasoning_msgs::Argument constArgument(const string& str) {
+    reasoning_msgs::Argument arg;
+    arg.constant.str = str;
+    return arg;
+}
+
 int main(int argc, char **argv) {
 	// Initialize node
 	ros::init(argc, argv, "ReasonerTest");
@@ -22,86 +34,39 @@ int main(int argc, char **argv) {
 
 	client.waitForExistence();
 
-	reasoning_msgs::Query query;
-	reasoning_msgs::Argument arg1;
-	reasoning_msgs::Argument arg2;
-	reasoning_msgs::Argument arg3;
+    reasoning_srvs::Query query;
 
-	/*
-	query.predicate = "has-property";
-	arg1.value.exact_value_str = "ID-2";
-	arg2.value.exact_value_str = "class_label";
-	arg3.variable = "X";
-*/
+    reasoning_msgs::CompoundTerm term1;
+    term1.predicate = "type";
+    term1.arguments.push_back(varArgument("X"));
+    term1.arguments.push_back(constArgument("drink"));
 
-/*
-	query.predicate = "is-instance-at-coordinates";
-	arg1.value.exact_value_str = "ID-2";
-	arg2.variable = "POS";
-*/
-
-	/*
-	query.predicate = "is-class-at-coordinates";
-	arg1.value.exact_value_str = "coke";
-	arg2.variable = "POS";
-	*/
-
-/*
-	query.predicate = "is-instance-of";
-	arg1.variable = "X";
-	arg2.value.exact_value_str = "cup";
-*/
-
-	/*
-	query.predicate = "has_property";
-	arg1.value.exact_value_str = "id_1";
-	arg2.value.exact_value_str = "position";
-	arg3.variable = "X";
-	*/
-
-	/*
-	query.predicate = "owl_subclass_of";
-	arg1.variable = "A";
-	//arg2.variable = "B";
-	arg2.value.exact_value_str = "http://ias.cs.tum.edu/kb/knowrob.owl#FoodOrDrink";
-	 */
-	//visualisation_canvas(C).
-	query.predicate = "is_instance_of";
-	arg1.variable = "A";
-	arg2.variable = "B";
-
-	query.arguments.push_back(arg1);
-	query.arguments.push_back(arg2);
-	//query.arguments.push_back(arg3);
-
-	reasoning_srvs::Query srv;
-	srv.request.query.conjuncts.push_back(query);
-
+    query.request.conjuncts.push_back(term1);
 
     ros::Time current_time = ros::Time::now();
 
-	if (client.call(srv)) {
+    if (client.call(query)) {
 
         cout << "test_reasoner: query took " << (ros::Time::now().toSec() - current_time.toSec()) << "seconds" << endl;
 
-		if (!srv.response.response.binding_sets.empty()) {
-			for(vector<reasoning_msgs::VariableBindingSet>::const_iterator it = srv.response.response.binding_sets.begin();
-					it != srv.response.response.binding_sets.end(); ++it) {
+        if (!query.response.binding_sets.empty()) {
+            for(vector<reasoning_msgs::BindingSet>::const_iterator it = query.response.binding_sets.begin();
+                    it != query.response.binding_sets.end(); ++it) {
 
-				if (it->bindings.empty()) {
-					cout << "Yes (probability = " << it->probability << ")." << endl << endl;
+                const reasoning_msgs::BindingSet& binding_set = *it;
+
+                if (binding_set.bindings.empty()) {
+                    cout << "Yes" << endl;
 				} else {
-					cout << "=== probability: " << it->probability << " === " << endl;
-					for(vector<reasoning_msgs::VariableBinding>::const_iterator it_b = it->bindings.begin(); it_b != it->bindings.end(); ++it_b) {
-						pbl::PDF* pdf = pbl::msgToPDF(it_b->value);
-						cout << it_b->variable << " = " << pdf->toString() << endl;
-						delete pdf;
+                    for(vector<reasoning_msgs::Binding>::const_iterator it_b = binding_set.bindings.begin(); it_b != binding_set.bindings.end(); ++it_b) {
+                        const reasoning_msgs::Binding& binding = *it_b;
+                        cout << binding.variable << " = " << binding.value.str << "\t" << endl;
 					}
 					cout << endl;
 				}
 			}
 		} else {
-			cout << "No." << endl << endl;
+            cout << "No." << endl << endl;
 		}
 
 	} else {

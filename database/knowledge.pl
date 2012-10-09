@@ -2,6 +2,9 @@
 %                  TAXONOMY
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+type(coke, drink).
+type(sprite, drink).
+
 % locations
 is_direct_subclass_of(seat, location).
 is_direct_subclass_of(table, location).

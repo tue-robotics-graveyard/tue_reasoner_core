@@ -2,7 +2,7 @@
 
 <launch>
 
-    <arg name="args" /> 
+    <arg name="args" default="" /> 
 
     <node pkg="tue_reasoner" type="reasoner" args="$(arg args)" respawn="false" name="reasoner" output="screen">
         <param name="database_filename" value="$(find tue_reasoner)/database/knowledge.pl"/>   
