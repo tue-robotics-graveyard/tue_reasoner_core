@@ -40,8 +40,13 @@ int main(int argc, char **argv) {
     term1.predicate = "type";
     term1.arguments.push_back(varArgument("X"));
     term1.arguments.push_back(constArgument("drink"));
-
     query.request.conjuncts.push_back(term1);
+
+    reasoning_msgs::CompoundTerm term2;
+    term2.predicate = "location";
+    term2.arguments.push_back(varArgument("X"));
+    term2.arguments.push_back(constArgument("living_room"));
+    query.request.conjuncts.push_back(term2);
 
     ros::Time current_time = ros::Time::now();
 
@@ -60,7 +65,7 @@ int main(int argc, char **argv) {
 				} else {
                     for(vector<reasoning_msgs::Binding>::const_iterator it_b = binding_set.bindings.begin(); it_b != binding_set.bindings.end(); ++it_b) {
                         const reasoning_msgs::Binding& binding = *it_b;
-                        cout << binding.variable << " = " << binding.value.str << "\t" << endl;
+                        cout << binding.variable << " = " << binding.value.str << "\t";
 					}
 					cout << endl;
 				}

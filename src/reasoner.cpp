@@ -105,27 +105,29 @@ bool proccessQuery(reasoning_srvs::Query::Request& req, reasoning_srvs::Query::R
         return false;
     }
 
+    PlTermv av(1);
+    PlTail goal_list(av[0]);
+
+    map<string, PlTerm> str_to_var;
     for(vector<reasoning_msgs::CompoundTerm>::const_iterator it = req.conjuncts.begin(); it != req.conjuncts.end(); ++it) {
         const reasoning_msgs::CompoundTerm& term_msg = *it;
 
         cout << term_msg.predicate << "/" << term_msg.arguments.size() << endl;
 
-        PlTermv av(1);
-        map<string, PlTerm> str_to_var;
-        PlTail goal_list(av[0]);
         goal_list.append(msgToProlog(term_msg, str_to_var));
-        goal_list.close();
-
-        try {
-            PlQuery q("complex_query", av);
-            while( q.next_solution() ) {
-                res.binding_sets.push_back(prologToBindingSetMsg(str_to_var));
-            }
-        } catch ( PlException &ex ) {
-            std::cerr << (char *)ex << std::endl;
-        }
-
 	}
+
+
+    goal_list.close();
+
+    try {
+        PlQuery q("complex_query", av);
+        while( q.next_solution() ) {
+            res.binding_sets.push_back(prologToBindingSetMsg(str_to_var));
+        }
+    } catch ( PlException &ex ) {
+        std::cerr << (char *)ex << std::endl;
+    }
 
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t_end);
     printf("Reasoner: query took  %f seconds.\n", (t_end.tv_sec - t_start.tv_sec) + double(t_end.tv_nsec - t_start.tv_nsec) / 1e9);
