@@ -26,6 +26,10 @@ else(HAVE_SWI_PROLOG_H)
   message(FATAL_ERROR "Can't proceed without <SWI-Prolog.h>")
 endif(HAVE_SWI_PROLOG_H)
 
+find_library(SWIPL_LIB NAMES libpl.so libswipl.so)
+
+message("${SWIPL_LIB}")
+
 #uncomment if you have defined messages
 #rosbuild_genmsg()
 #uncomment if you have defined services
@@ -53,10 +57,10 @@ rosbuild_add_executable(reasoner src/Value.cpp
                                                                  ${INCLUDE_FILES}
 )
 
-target_link_libraries(reasoner swipl)
+target_link_libraries(reasoner ${SWIPL_LIB})
 
 rosbuild_add_executable(test_reasoner src/test_reasoner.cpp)								 
 
 rosbuild_add_executable(test_swi src/test_swi.cpp)
-target_link_libraries(test_swi swipl)
+target_link_libraries(test_swi ${SWIPL_LIB})
 
