@@ -17,7 +17,7 @@
   <depend package="probability_msgs"/>
   <depend package="tue_world_model"/>
 
-  <rosdep name="swi-prolog" />
+  <!--rosdep name="swi-prolog" / -->
 
 </package>
 
