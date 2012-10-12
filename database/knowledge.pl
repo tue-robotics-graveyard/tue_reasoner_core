@@ -2,6 +2,8 @@
 %                  TAXONOMY
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+:- dynamic type/2.
+
 type(coke, drink).
 type(sprite, drink).
 
@@ -149,10 +151,4 @@ has_property(id_1, position, test).
 has_property(id_1, position, test2).
 has_property(X, Y, Z) :-
 	comp_property(X, Y, Z).
-
-% TODO: get rid of complex_query
-complex_query([]).
-complex_query([H|T]) :-
-	call(H),
-	complex_query(T).
 

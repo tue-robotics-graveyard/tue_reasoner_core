@@ -8,10 +8,14 @@
 #include <ros/ros.h>
 
 #include "reasoning_srvs/Query.h"
+#include "reasoning_srvs/Assert.h"
 
 #include <problib/conversions.h>
 
 using namespace std;
+
+ros::ServiceClient assert_client;
+ros::ServiceClient query_client;
 
 reasoning_msgs::Argument varArgument(const string& var) {
     reasoning_msgs::Argument arg;
@@ -25,58 +29,96 @@ reasoning_msgs::Argument constArgument(const string& str) {
     return arg;
 }
 
-int main(int argc, char **argv) {
-	// Initialize node
-	ros::init(argc, argv, "ReasonerTest");
-	ros::NodeHandle nh_private("~");
+reasoning_msgs::CompoundTerm compoundTerm(const string& pred, const reasoning_msgs::Argument& arg1, const reasoning_msgs::Argument& arg2) {
+    reasoning_msgs::CompoundTerm term;
+    term.predicate = pred;
+    term.arguments.push_back(arg1);
+    term.arguments.push_back(arg2);
+    return term;
+}
 
-	ros::ServiceClient client = nh_private.serviceClient<reasoning_srvs::Query>("/reasoner/query");
+bool assertKnowledge(const reasoning_srvs::Assert::Request& req) {
+    reasoning_srvs::Assert::Response resp;
+    if (assert_client.call(req, resp)) {
+        if (resp.error == "") {
+            cout << "Assert succesfull" << endl;
+        } else {
+            cout << "Assert service: " << resp.error << endl;
+        }
+    } else {
+        ROS_ERROR("Failed to call service %s", assert_client.getService().c_str());
+        return false;
+    }
+    return true;
+}
 
-	client.waitForExistence();
-
-    reasoning_srvs::Query query;
-
-    reasoning_msgs::CompoundTerm term1;
-    term1.predicate = "type";
-    term1.arguments.push_back(varArgument("X"));
-    term1.arguments.push_back(constArgument("drink"));
-    query.request.conjuncts.push_back(term1);
-
-    reasoning_msgs::CompoundTerm term2;
-    term2.predicate = "location";
-    term2.arguments.push_back(varArgument("X"));
-    term2.arguments.push_back(constArgument("living_room"));
-    query.request.conjuncts.push_back(term2);
-
+bool queryKnowledge(const reasoning_srvs::Query::Request& req) {
     ros::Time current_time = ros::Time::now();
 
-    if (client.call(query)) {
+    reasoning_srvs::Query::Response resp;
+    if (query_client.call(req, resp)) {
 
         cout << "test_reasoner: query took " << (ros::Time::now().toSec() - current_time.toSec()) << "seconds" << endl;
 
-        if (!query.response.binding_sets.empty()) {
-            for(vector<reasoning_msgs::BindingSet>::const_iterator it = query.response.binding_sets.begin();
-                    it != query.response.binding_sets.end(); ++it) {
+        if (!resp.binding_sets.empty()) {
+            for(vector<reasoning_msgs::BindingSet>::const_iterator it = resp.binding_sets.begin();
+                    it != resp.binding_sets.end(); ++it) {
 
                 const reasoning_msgs::BindingSet& binding_set = *it;
 
                 if (binding_set.bindings.empty()) {
                     cout << "Yes" << endl;
-				} else {
+                } else {
                     for(vector<reasoning_msgs::Binding>::const_iterator it_b = binding_set.bindings.begin(); it_b != binding_set.bindings.end(); ++it_b) {
                         const reasoning_msgs::Binding& binding = *it_b;
                         cout << binding.variable << " = " << binding.value.str << "\t";
-					}
-					cout << endl;
-				}
-			}
-		} else {
+                    }
+                    cout << endl;
+                }
+            }
+        } else {
             cout << "No." << endl << endl;
-		}
+        }
 
-	} else {
-		ROS_ERROR("Failed to call service /reasoner/query");
-		return 1;
-	}
+    } else {
+        ROS_ERROR("Failed to call service %s", query_client.getService().c_str());
+        return false;
+    }
+    return true;
+}
 
+int main(int argc, char **argv) {
+	// Initialize node
+	ros::init(argc, argv, "ReasonerTest");
+	ros::NodeHandle nh_private("~");
+
+    /* * * * * * * * * INIT CLIENTS * * * * * * * * */
+
+    assert_client = nh_private.serviceClient<reasoning_srvs::Assert>("/reasoner/assert");
+    assert_client.waitForExistence();
+
+    query_client = nh_private.serviceClient<reasoning_srvs::Query>("/reasoner/query");
+    query_client.waitForExistence();
+
+    /* * * * * * * * * TEST * * * * * * * * */
+
+    reasoning_srvs::Assert::Request assert;
+    assert.facts.push_back(compoundTerm("type", constArgument("milk"), constArgument("drink")));
+    assertKnowledge(assert);
+
+    cout << "- - - - - - - - - - - - - - - - - - " << endl;
+
+    reasoning_srvs::Query::Request query;
+    query.conjuncts.push_back(compoundTerm("type", varArgument("X"), constArgument("drink")));
+    //query.conjuncts.push_back(compoundTerm("location", varArgument("X"), constArgument("living_room")));
+    queryKnowledge(query);
+
+    reasoning_srvs::Assert::Request retract;
+    retract.action = reasoning_srvs::Assert::Request::RETRACT;
+    retract.facts.push_back(compoundTerm("type", constArgument("coke"), varArgument("Y")));
+    assertKnowledge(retract);
+
+    cout << "- - - - - - - - - - - - - - - - - - " << endl;
+
+    queryKnowledge(query);
 }

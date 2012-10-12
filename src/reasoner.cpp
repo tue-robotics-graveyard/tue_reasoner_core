@@ -14,6 +14,7 @@
 #include "tue_reasoner/Parser.h"
 
 #include <reasoning_srvs/Query.h>
+#include <reasoning_srvs/Assert.h>
 
 #include <problib/conversions.h>
 
@@ -27,8 +28,6 @@
 #include <string>
 
 #include "swi-cpp/SWI-cpp.h"
-
-#define WM_DEV
 
 using namespace std;
 
@@ -117,7 +116,6 @@ bool proccessQuery(reasoning_srvs::Query::Request& req, reasoning_srvs::Query::R
         goal_list.append(msgToProlog(term_msg, str_to_var));
 	}
 
-
     goal_list.close();
 
     try {
@@ -135,6 +133,50 @@ bool proccessQuery(reasoning_srvs::Query::Request& req, reasoning_srvs::Query::R
 	return true;
 }
 
+bool proccessAssert(reasoning_srvs::Assert::Request& req, reasoning_srvs::Assert::Response& res) {
+
+    if (req.facts.empty()) {
+        ROS_ERROR("Empty received empty query");
+        return false;
+    }
+
+    string action;
+    if (req.action == reasoning_srvs::Assert::Request::ASSERT) {
+        action = "assert";
+    } else if (req.action == reasoning_srvs::Assert::Request::ASSERTA) {
+        action = "asserta";
+    } else if (req.action == reasoning_srvs::Assert::Request::ASSERTZ) {
+        action = "assertz";
+    } else if (req.action == reasoning_srvs::Assert::Request::RETRACT) {
+        action = "retractall";
+    }
+
+    cout << action << endl;
+
+    stringstream errors;
+
+    for(vector<reasoning_msgs::CompoundTerm>::const_iterator it = req.facts.begin(); it != req.facts.end(); ++it) {
+        const reasoning_msgs::CompoundTerm& term_msg = *it;
+
+        PlTermv av(1);
+        map<string, PlTerm> str_to_var;
+        av[0] = msgToProlog(term_msg, str_to_var);
+
+        PlQuery q(action.c_str(), av);
+
+        try {
+            while (q.next_solution()) {
+
+            }
+        } catch ( PlException &ex ) {
+            errors << (char *)ex << std::endl;
+        }
+    }
+
+    res.error = errors.str();
+    return true;
+}
+
 int main(int argc, char **argv) {
 	// Initialize node
 	ros::init(argc, argv, "reasoner");
@@ -146,9 +188,29 @@ int main(int argc, char **argv) {
 
     PlEngine prolog_engine(argc, argv);
 
+    string std_database = "NONE";
+    nh_private.getParam("std_database", std_database);
+    PlQuery q_consult("consult", PlTermv(std_database.c_str()));
+    try {
+    if (!q_consult.next_solution()) {
+        ROS_ERROR("Failed to load standard database: %s", std_database.c_str());
+        return 0;
+    }
+    } catch ( PlException &ex ) {
+        std::cerr << (char *)ex << std::endl;
+        return 0;
+    }
+
 	string db_filename = "";
 	nh_private.getParam("database_filename", db_filename);
+    PlTermv filename_term(db_filename.c_str());
 
+    if (!PlCall("consult", filename_term)) {
+        ROS_ERROR("Failed to parse knowledge file: %s", db_filename.c_str());
+        return 0;
+    }
+
+    /*
 	// load the knowledge base into prolog
 	PlTermv filename_term(db_filename.c_str());
 	PlQuery q_consult("consult", filename_term);
@@ -161,8 +223,10 @@ int main(int argc, char **argv) {
 		std::cerr << (char *)ex << std::endl;
 		return 0;
 	}
+    */
 
-	ros::ServiceServer service = nh_private.advertiseService("query", proccessQuery);
+    ros::ServiceServer query_service = nh_private.advertiseService("query", proccessQuery);
+    ros::ServiceServer assert_service = nh_private.advertiseService("assert", proccessAssert);
 
     //world_model_ = new WorldModelROS();
     //world_model_->registerEvidenceTopic("/world_evidence");
