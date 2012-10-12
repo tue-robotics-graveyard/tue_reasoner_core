@@ -72,17 +72,24 @@ bool queryKnowledge(const reasoning_srvs::Query::Request& req) {
                         const reasoning_msgs::Binding& binding = *it_b;
                         cout << binding.variable << " = ";
 
-                        if (binding.value.str != "") {
+                        if (binding.value.type == reasoning_msgs::Constant::STRING) {
                             cout << binding.value.str;
-                        } else if (!binding.value.num_array.empty()) {
+                        } else if (binding.value.type == reasoning_msgs::Constant::NUMBER) {
+                            cout << binding.value.num;
+                        } else if (binding.value.type == reasoning_msgs::Constant::NUMBER_ARRAY) {
                             cout << "[";
                             for(unsigned int i = 0; i < binding.value.num_array.size(); ++i) {
                                 cout << " " << binding.value.num_array[i];
                             }
                             cout << "]";
+                        } else if (binding.value.type == reasoning_msgs::Constant::PDF) {
+                            pbl::PDF* pdf = pbl::msgToPDF(binding.value.pdf);
+                            if (pdf) {
+                                cout << pdf->toString();
+                            } else {
+                                cout << "INVALID PDF";
+                            }
                         }
-
-
                         cout << "\t";
                     }
                     cout << endl;

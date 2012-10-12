@@ -74,8 +74,9 @@ reasoning_msgs::BindingSet prologToBindingSetMsg(const map<string, PlTerm>& str_
 		const PlTerm& term = it->second;
 
 		if ((string)term.name() == ".") {
+            binding.value.type = reasoning_msgs::Constant::NUMBER_ARRAY;
 
-			vector<double> vec;
+            vector<double> vec;
 
 			PlTail list(term);
 
@@ -85,6 +86,7 @@ reasoning_msgs::BindingSet prologToBindingSetMsg(const map<string, PlTerm>& str_
 			}
 
 		} else {
+            binding.value.type = reasoning_msgs::Constant::STRING;
             binding.value.str = term.name();
 		}
 
