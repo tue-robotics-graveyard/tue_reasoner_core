@@ -206,14 +206,15 @@ bool proccessAssert(reasoning_srvs::Assert::Request& req, reasoning_srvs::Assert
     return true;
 }
 
-bool loadDatabase(reasoning_srvs::LoadDatabase::Request& req, reasoning_srvs::LoadDatabase::Response& resp) {
-    PlTermv filename_term(req.db_filename.c_str());
+bool loadDatabase(const string& filename) {
+    return PlCall("consult", PlTermv(filename.c_str()));
+}
 
-    if (!PlCall("consult", filename_term)) {
-        resp.result = "Failed to parse knowledge file: " + req.db_filename;
+bool loadDatabase(reasoning_srvs::LoadDatabase::Request& req, reasoning_srvs::LoadDatabase::Response& resp) {
+    if (!loadDatabase(req.db_filename)) {
+        resp.result = "Failed to load database: " + req.db_filename;
         ROS_ERROR("%s", resp.result.c_str());
     }
-
     return true;
 }
 
@@ -228,27 +229,19 @@ int main(int argc, char **argv) {
 
     PlEngine prolog_engine(argc, argv);
 
-	string db_filename = "";
-    nh_private.getParam("std_database", db_filename);
-    if (!PlCall("consult", PlTermv(db_filename.c_str()))) {
-        ROS_ERROR("Failed to parse knowledge file: %s", db_filename.c_str());
-        return 0;
+    string std_db_filename = "";
+    nh_private.getParam("std_database", std_db_filename);
+    if (!loadDatabase(std_db_filename)) {
+        ROS_ERROR("Failed to load database: %s", std_db_filename.c_str());
+        return 1;
     }
 
-    /*
-	// load the knowledge base into prolog
-	PlTermv filename_term(db_filename.c_str());
-	PlQuery q_consult("consult", filename_term);
-	try {
-		if (!q_consult.next_solution()) {
-			ROS_ERROR("Failed to parse knowledge file: %s", db_filename.c_str());
-			return 0;
-		}
-	} catch ( PlException &ex ) {
-		std::cerr << (char *)ex << std::endl;
-		return 0;
-	}
-    */
+    string db_filename = "";
+    nh_private.getParam("database", db_filename);
+    if (!loadDatabase(db_filename)) {
+        ROS_ERROR("Failed to load database: %s", db_filename.c_str());
+        return 1;
+    }
 
     ros::ServiceServer query_service = nh_private.advertiseService("query", proccessQuery);
     ros::ServiceServer assert_service = nh_private.advertiseService("assert", proccessAssert);

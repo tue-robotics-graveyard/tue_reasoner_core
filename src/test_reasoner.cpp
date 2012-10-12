@@ -117,11 +117,6 @@ bool queryKnowledge(const reasoning_srvs::Query::Request& req) {
 
 int main(int argc, char **argv) {
 
-    if (argc <= 1) {
-        cout << "Please specify database filename" << endl;
-        return 1;
-    }
-
     // Initialize node
 	ros::init(argc, argv, "ReasonerTest");
 	ros::NodeHandle nh_private("~");
@@ -139,14 +134,21 @@ int main(int argc, char **argv) {
 
     /* * * * * * * * * LOAD DATABASE * * * * * * * * */
 
+    /*
+    if (argc <= 1) {
+        cout << "Please specify database filename" << endl;
+        return 1;
+    }
+
     reasoning_srvs::LoadDatabase load_db;
     load_db.request.db_filename = argv[1];
     load_db_client.call(load_db);
+    */
 
     /* * * * * * * * * TEST * * * * * * * * */
 
     reasoning_srvs::Query::Request query1;
-    query1.conjuncts.push_back(compoundTerm("is_class_at_coordinates", constArgument("Exit"), varArgument("Y")));
+    query1.conjuncts.push_back(compoundTerm("is_class_at_coordinates", constArgument("exit"), varArgument("Y")));
     queryKnowledge(query1);
 
     reasoning_srvs::Assert::Request assert;
