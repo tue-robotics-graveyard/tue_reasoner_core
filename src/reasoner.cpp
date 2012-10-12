@@ -55,9 +55,23 @@ PlCompound msgToProlog(const reasoning_msgs::CompoundTerm& msg, map<string, PlTe
 			}
 		} else {
 			// argument is a value
-            if (arg_msg.constant.str != "") {
+
+            if (arg_msg.constant.type == reasoning_msgs::Constant::STRING) {
                 args_prolog[i] = arg_msg.constant.str.c_str();
+            } else if (arg_msg.constant.type == reasoning_msgs::Constant::NUMBER) {
+                args_prolog[i] = arg_msg.constant.num;
+            } else if (arg_msg.constant.type == reasoning_msgs::Constant::NUMBER_ARRAY) {
+                PlTail list(args_prolog[i]);
+
+                for(unsigned int i = 0; i < arg_msg.constant.num_array.size(); ++i) {
+                    list.append(PlTerm(arg_msg.constant.num_array[i]));
+                }
+                list.close();
+
+            } else if (arg_msg.constant.type == reasoning_msgs::Constant::PDF) {
+                cout << "CANNOT ADD PDF's TO THE PROLOG DATABASE YET." << endl;
             }
+
 		}
 	}
 	return PlCompound(msg.predicate.c_str(), args_prolog);

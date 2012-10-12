@@ -25,7 +25,15 @@ reasoning_msgs::Argument varArgument(const string& var) {
 
 reasoning_msgs::Argument constArgument(const string& str) {
     reasoning_msgs::Argument arg;
+    arg.constant.type = reasoning_msgs::Constant::STRING;
     arg.constant.str = str;
+    return arg;
+}
+
+reasoning_msgs::Argument constArgument(const vector<double>& vec) {
+    reasoning_msgs::Argument arg;
+    arg.constant.type = reasoning_msgs::Constant::NUMBER_ARRAY;
+    arg.constant.num_array = vec;
     return arg;
 }
 
@@ -129,10 +137,18 @@ int main(int argc, char **argv) {
     assert.facts.push_back(compoundTerm("type", constArgument("milk"), constArgument("drink")));
     assertKnowledge(assert);
 
+    reasoning_srvs::Assert::Request assert2;
+    vector<double> vec;
+    vec.push_back(1);
+    vec.push_back(2);
+    vec.push_back(3);
+    assert2.facts.push_back(compoundTerm("type", constArgument("test"), constArgument(vec)));
+    assertKnowledge(assert2);
+
     cout << "- - - - - - - - - - - - - - - - - - " << endl;
 
     reasoning_srvs::Query::Request query;
-    query.conjuncts.push_back(compoundTerm("type", varArgument("X"), constArgument("drink")));
+    query.conjuncts.push_back(compoundTerm("type", varArgument("X"), varArgument("Y")));
     //query.conjuncts.push_back(compoundTerm("location", varArgument("X"), constArgument("living_room")));
     queryKnowledge(query);
 
