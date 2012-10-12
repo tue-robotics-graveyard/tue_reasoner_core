@@ -15,6 +15,7 @@
 
 #include <reasoning_srvs/Query.h>
 #include <reasoning_srvs/Assert.h>
+#include <reasoning_srvs/LoadDatabase.h>
 
 #include <problib/conversions.h>
 
@@ -123,28 +124,41 @@ bool proccessQuery(reasoning_srvs::Query::Request& req, reasoning_srvs::Query::R
     PlTermv av(1);
     PlTail goal_list(av[0]);
 
+
+    stringstream print_out;
+
+    print_out << "?- ";
+
     map<string, PlTerm> str_to_var;
     for(vector<reasoning_msgs::CompoundTerm>::const_iterator it = req.conjuncts.begin(); it != req.conjuncts.end(); ++it) {
         const reasoning_msgs::CompoundTerm& term_msg = *it;
-
-        cout << term_msg.predicate << "/" << term_msg.arguments.size() << endl;
-
-        goal_list.append(msgToProlog(term_msg, str_to_var));
-	}
-
+        PlTerm term = msgToProlog(term_msg, str_to_var);
+        print_out << (char*)term << ", ";
+        goal_list.append(term);
+    }
     goal_list.close();
 
-    try {
-        PlQuery q("complex_query", av);
+    ROS_INFO("%s", print_out.str().c_str());
+
+    try {        
+        PlQuery q("complex_query", av);        
         while( q.next_solution() ) {
             res.binding_sets.push_back(prologToBindingSetMsg(str_to_var));
+
+            stringstream s_bindings;
+            for(map<string, PlTerm>::iterator it_bind = str_to_var.begin(); it_bind != str_to_var.end(); ++it_bind) {
+                s_bindings << it_bind->first << " = " << (char*)it_bind->second << " ";
+            }
+            ROS_INFO("   %s", s_bindings.str().c_str());
+
+            // todo PRINT ANSWER!
         }
     } catch ( PlException &ex ) {
         std::cerr << (char *)ex << std::endl;
     }
 
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t_end);
-    printf("Reasoner: query took  %f seconds.\n", (t_end.tv_sec - t_start.tv_sec) + double(t_end.tv_nsec - t_start.tv_nsec) / 1e9);
+    ROS_INFO("       Reasoner: query took  %f seconds.", (t_end.tv_sec - t_start.tv_sec) + double(t_end.tv_nsec - t_start.tv_nsec) / 1e9);
 
 	return true;
 }
@@ -167,8 +181,6 @@ bool proccessAssert(reasoning_srvs::Assert::Request& req, reasoning_srvs::Assert
         action = "retractall";
     }
 
-    cout << action << endl;
-
     stringstream errors;
 
     for(vector<reasoning_msgs::CompoundTerm>::const_iterator it = req.facts.begin(); it != req.facts.end(); ++it) {
@@ -178,6 +190,7 @@ bool proccessAssert(reasoning_srvs::Assert::Request& req, reasoning_srvs::Assert
         map<string, PlTerm> str_to_var;
         av[0] = msgToProlog(term_msg, str_to_var);
 
+        ROS_INFO("?- \033[1m%s(%s)\033[0m", action.c_str(), (char*)av[0]);
         PlQuery q(action.c_str(), av);
 
         try {
@@ -193,6 +206,17 @@ bool proccessAssert(reasoning_srvs::Assert::Request& req, reasoning_srvs::Assert
     return true;
 }
 
+bool loadDatabase(reasoning_srvs::LoadDatabase::Request& req, reasoning_srvs::LoadDatabase::Response& resp) {
+    PlTermv filename_term(req.db_filename.c_str());
+
+    if (!PlCall("consult", filename_term)) {
+        resp.result = "Failed to parse knowledge file: " + req.db_filename;
+        ROS_ERROR("%s", resp.result.c_str());
+    }
+
+    return true;
+}
+
 int main(int argc, char **argv) {
 	// Initialize node
 	ros::init(argc, argv, "reasoner");
@@ -204,24 +228,9 @@ int main(int argc, char **argv) {
 
     PlEngine prolog_engine(argc, argv);
 
-    string std_database = "NONE";
-    nh_private.getParam("std_database", std_database);
-    PlQuery q_consult("consult", PlTermv(std_database.c_str()));
-    try {
-    if (!q_consult.next_solution()) {
-        ROS_ERROR("Failed to load standard database: %s", std_database.c_str());
-        return 0;
-    }
-    } catch ( PlException &ex ) {
-        std::cerr << (char *)ex << std::endl;
-        return 0;
-    }
-
 	string db_filename = "";
-	nh_private.getParam("database_filename", db_filename);
-    PlTermv filename_term(db_filename.c_str());
-
-    if (!PlCall("consult", filename_term)) {
+    nh_private.getParam("std_database", db_filename);
+    if (!PlCall("consult", PlTermv(db_filename.c_str()))) {
         ROS_ERROR("Failed to parse knowledge file: %s", db_filename.c_str());
         return 0;
     }
@@ -243,6 +252,7 @@ int main(int argc, char **argv) {
 
     ros::ServiceServer query_service = nh_private.advertiseService("query", proccessQuery);
     ros::ServiceServer assert_service = nh_private.advertiseService("assert", proccessAssert);
+    ros::ServiceServer load_db_service = nh_private.advertiseService("load_database", loadDatabase);
 
     //world_model_ = new WorldModelROS();
     //world_model_->registerEvidenceTopic("/world_evidence");

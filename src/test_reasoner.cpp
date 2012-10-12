@@ -9,6 +9,7 @@
 
 #include "reasoning_srvs/Query.h"
 #include "reasoning_srvs/Assert.h"
+#include "reasoning_srvs/LoadDatabase.h"
 
 #include <problib/conversions.h>
 
@@ -115,11 +116,20 @@ bool queryKnowledge(const reasoning_srvs::Query::Request& req) {
 }
 
 int main(int argc, char **argv) {
-	// Initialize node
+
+    if (argc <= 1) {
+        cout << "Please specify database filename" << endl;
+        return 1;
+    }
+
+    // Initialize node
 	ros::init(argc, argv, "ReasonerTest");
 	ros::NodeHandle nh_private("~");
 
     /* * * * * * * * * INIT CLIENTS * * * * * * * * */
+
+    ros::ServiceClient load_db_client = nh_private.serviceClient<reasoning_srvs::LoadDatabase>("/reasoner/load_database");
+    load_db_client.waitForExistence();
 
     assert_client = nh_private.serviceClient<reasoning_srvs::Assert>("/reasoner/assert");
     assert_client.waitForExistence();
@@ -127,10 +137,16 @@ int main(int argc, char **argv) {
     query_client = nh_private.serviceClient<reasoning_srvs::Query>("/reasoner/query");
     query_client.waitForExistence();
 
+    /* * * * * * * * * LOAD DATABASE * * * * * * * * */
+
+    reasoning_srvs::LoadDatabase load_db;
+    load_db.request.db_filename = argv[1];
+    load_db_client.call(load_db);
+
     /* * * * * * * * * TEST * * * * * * * * */
 
     reasoning_srvs::Query::Request query1;
-    query1.conjuncts.push_back(compoundTerm("is_class_at_coordinates", varArgument("X"), varArgument("Y")));
+    query1.conjuncts.push_back(compoundTerm("is_class_at_coordinates", constArgument("Exit"), varArgument("Y")));
     queryKnowledge(query1);
 
     reasoning_srvs::Assert::Request assert;
