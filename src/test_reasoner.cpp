@@ -61,8 +61,7 @@ bool queryKnowledge(const reasoning_srvs::Query::Request& req) {
         cout << "test_reasoner: query took " << (ros::Time::now().toSec() - current_time.toSec()) << "seconds" << endl;
 
         if (!resp.binding_sets.empty()) {
-            for(vector<reasoning_msgs::BindingSet>::const_iterator it = resp.binding_sets.begin();
-                    it != resp.binding_sets.end(); ++it) {
+            for(vector<reasoning_msgs::BindingSet>::const_iterator it = resp.binding_sets.begin(); it != resp.binding_sets.end(); ++it) {
 
                 const reasoning_msgs::BindingSet& binding_set = *it;
 
@@ -71,7 +70,20 @@ bool queryKnowledge(const reasoning_srvs::Query::Request& req) {
                 } else {
                     for(vector<reasoning_msgs::Binding>::const_iterator it_b = binding_set.bindings.begin(); it_b != binding_set.bindings.end(); ++it_b) {
                         const reasoning_msgs::Binding& binding = *it_b;
-                        cout << binding.variable << " = " << binding.value.str << "\t";
+                        cout << binding.variable << " = ";
+
+                        if (binding.value.str != "") {
+                            cout << binding.value.str;
+                        } else if (!binding.value.num_array.empty()) {
+                            cout << "[";
+                            for(unsigned int i = 0; i < binding.value.num_array.size(); ++i) {
+                                cout << " " << binding.value.num_array[i];
+                            }
+                            cout << "]";
+                        }
+
+
+                        cout << "\t";
                     }
                     cout << endl;
                 }
@@ -101,6 +113,10 @@ int main(int argc, char **argv) {
     query_client.waitForExistence();
 
     /* * * * * * * * * TEST * * * * * * * * */
+
+    reasoning_srvs::Query::Request query1;
+    query1.conjuncts.push_back(compoundTerm("is_class_at_coordinates", varArgument("X"), varArgument("Y")));
+    queryKnowledge(query1);
 
     reasoning_srvs::Assert::Request assert;
     assert.facts.push_back(compoundTerm("type", constArgument("milk"), constArgument("drink")));
