@@ -95,9 +95,11 @@ is_subclass_of(X, Z) :-
 %                  COORDINATES
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-object_at_coordinates(obj1, [9.065, 0.490, 0]).
-object_at_coordinates(obj2, [7.374, 0.674, 0]).
-object_at_coordinates(obj3, [7.346, 2.195, 0]).
+object_at_coordinates(obj1,             [9.065, 0.490, 0]).
+object_at_coordinates(obj2,             [7.374, 0.674, 0]).
+object_at_coordinates(obj3,             [7.346, 2.195, 0]).
+object_at_coordinates(desk_A,           [1.33, -0.38, -1.57]).
+object_at_coordinates(couch_table_A,    [2.00, 0.90, 0.45]).
 
 object_at_coordinates(wp1, [1, 2, 0]).
 object_at_coordinates(wp2, [2, 2, 0]).
