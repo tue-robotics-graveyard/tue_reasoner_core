@@ -110,6 +110,7 @@ object_at_coordinates(wp1, [2.67, 1.75, 0]).
 object_at_coordinates(wp2, [2.25, 1.75, 1.57]).
 object_at_coordinates(wp3, [1.75, 0.4, 2.25]).
 object_at_coordinates(wp4, [4, 2, 0]).
+object_at_coordinates(wp5, location(1, 2, 3)).
 
 find_class_coordinates(Class, Object, Coordinates) :-
     class(Object, Class),
@@ -120,7 +121,7 @@ find_class_coordinates(Class, Object, Coordinates) :-
 %              SEMANTIC LOCATIONS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-class_in_room(Class, Room, Object) :- 
+class_in_room(Class, Object, Room) :- 
     class(Object, Class), 
     at_location(Object, Room).
 
