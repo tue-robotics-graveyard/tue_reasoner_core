@@ -13,17 +13,20 @@
 #include "tue_reasoner/BindingSet.h"
 #include "tue_reasoner/Parser.h"
 
-#include <reasoning_srvs/Query.h>
-#include <reasoning_srvs/Assert.h>
-#include <reasoning_srvs/LoadDatabase.h>
+#include <reasoning_msgs/Query.h>
+#include <reasoning_msgs/Assert.h>
+#include <reasoning_msgs/LoadDatabase.h>
+#include <reasoning_msgs/BindingSet.h>
 
 #include <problib/conversions.h>
 
+/*
 #include <WorldModelROS.h>
 #include <mht_old/MHTObject.h>
 #include <storage/SemanticObject.h>
 #include <core/PropertySet.h>
 #include <core/Property.h>
+*/
 
 #include <vector>
 #include <string>
@@ -36,26 +39,24 @@ using namespace std;
 
 //WorldModelROS* world_model_;
 
-PlCompound msgToProlog(const reasoning_msgs::CompoundTerm& msg, map<string, PlTerm>& str_to_var) {
-	PlTermv args_prolog(msg.arguments.size());
+PlCompound msgToProlog(const reasoning_msgs::TermImpl& msg, const reasoning_msgs::Term& full_term_msg, map<string, PlTerm>& str_to_var) {
+    PlTermv args_prolog(msg.arguments.size());
 
-	for(unsigned int i = 0; i < msg.arguments.size(); ++i) {
-
-		const reasoning_msgs::Argument& arg_msg = msg.arguments[i];
-
-		if (arg_msg.variable != "") {
-			// argument is a variable
+    for(unsigned int i = 0; i < msg.arguments.size(); ++i) {
+        const reasoning_msgs::Argument& arg_msg = msg.arguments[i];
+        if (arg_msg.type == reasoning_msgs::Argument::VARIABLE) {
+            // argument is a variable
 
             map<string, PlTerm>::iterator it_var = str_to_var.find(arg_msg.variable);
-			if (it_var != str_to_var.end()) {
-				// known variable
-				args_prolog[i] = it_var->second;
-			} else {
-				// unknown variable, so add to map
-				str_to_var[arg_msg.variable] = args_prolog[i];
-			}
-		} else {
-			// argument is a value
+            if (it_var != str_to_var.end()) {
+                // known variable
+                args_prolog[i] = it_var->second;
+            } else {
+                // unknown variable, so add to map
+                str_to_var[arg_msg.variable] = args_prolog[i];
+            }
+        } else if (arg_msg.type == reasoning_msgs::Argument::CONSTANT) {
+            // argument is a value
 
             if (arg_msg.constant.type == reasoning_msgs::Constant::STRING) {
                 args_prolog[i] = arg_msg.constant.str.c_str();
@@ -72,10 +73,13 @@ PlCompound msgToProlog(const reasoning_msgs::CompoundTerm& msg, map<string, PlTe
             } else if (arg_msg.constant.type == reasoning_msgs::Constant::PDF) {
                 cout << "CANNOT ADD PDF's TO THE PROLOG DATABASE YET." << endl;
             }
-
-		}
-	}
-	return PlCompound(msg.predicate.c_str(), args_prolog);
+        } else if (arg_msg.type == reasoning_msgs::Argument::COMPOUND) {
+            args_prolog[i] = msgToProlog(full_term_msg.sub_terms[arg_msg.term_ptr], full_term_msg, str_to_var);
+        } else {
+            ROS_ERROR_STREAM("Received argument with unspecified type:\n" << arg_msg);
+        }
+    }
+    return PlCompound(msg.functor.c_str(), args_prolog);
 }
 
 reasoning_msgs::BindingSet prologToBindingSetMsg(const map<string, PlTerm>& str_to_var) {
@@ -111,25 +115,21 @@ reasoning_msgs::BindingSet prologToBindingSetMsg(const map<string, PlTerm>& str_
 	return binding_set;
 }
 
-bool proccessQuery(reasoning_srvs::Query::Request& req, reasoning_srvs::Query::Response& res) {
+bool proccessQuery(reasoning_msgs::Query::Request& req, reasoning_msgs::Query::Response& res) {
 
     timespec t_start, t_end;
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t_start);
 
-    if (req.conjuncts.empty()) {
-        ROS_ERROR("Empty received empty query");
-        return false;
-    }
 
     PlTermv av(1);
-    PlTail goal_list(av[0]);
-
-
-    stringstream print_out;
-
-    print_out << "?- ";
-
     map<string, PlTerm> str_to_var;
+    av[0] = msgToProlog(req.term.root, req.term, str_to_var);
+
+    stringstream print_out;    
+    print_out << "?- ";
+    print_out << (char*)av[0];
+
+    /*
     for(vector<reasoning_msgs::CompoundTerm>::const_iterator it = req.conjuncts.begin(); it != req.conjuncts.end(); ++it) {
         const reasoning_msgs::CompoundTerm& term_msg = *it;
         PlTerm term = msgToProlog(term_msg, str_to_var);
@@ -137,11 +137,12 @@ bool proccessQuery(reasoning_srvs::Query::Request& req, reasoning_srvs::Query::R
         goal_list.append(term);
     }
     goal_list.close();
+    */
 
     ROS_INFO("%s", print_out.str().c_str());
 
     try {        
-        PlQuery q("complex_query", av);        
+        PlQuery q("call", av);
         while( q.next_solution() ) {
             res.binding_sets.push_back(prologToBindingSetMsg(str_to_var));
 
@@ -163,7 +164,7 @@ bool proccessQuery(reasoning_srvs::Query::Request& req, reasoning_srvs::Query::R
 	return true;
 }
 
-bool proccessAssert(reasoning_srvs::Assert::Request& req, reasoning_srvs::Assert::Response& res) {
+bool proccessAssert(reasoning_msgs::Assert::Request& req, reasoning_msgs::Assert::Response& res) {
 
     if (req.facts.empty()) {
         ROS_ERROR("Empty received empty query");
@@ -171,24 +172,24 @@ bool proccessAssert(reasoning_srvs::Assert::Request& req, reasoning_srvs::Assert
     }
 
     string action;
-    if (req.action == reasoning_srvs::Assert::Request::ASSERT) {
+    if (req.action == reasoning_msgs::Assert::Request::ASSERT) {
         action = "assert";
-    } else if (req.action == reasoning_srvs::Assert::Request::ASSERTA) {
+    } else if (req.action == reasoning_msgs::Assert::Request::ASSERTA) {
         action = "asserta";
-    } else if (req.action == reasoning_srvs::Assert::Request::ASSERTZ) {
+    } else if (req.action == reasoning_msgs::Assert::Request::ASSERTZ) {
         action = "assertz";
-    } else if (req.action == reasoning_srvs::Assert::Request::RETRACT) {
+    } else if (req.action == reasoning_msgs::Assert::Request::RETRACT) {
         action = "retractall";
     }
 
     stringstream errors;
 
-    for(vector<reasoning_msgs::CompoundTerm>::const_iterator it = req.facts.begin(); it != req.facts.end(); ++it) {
-        const reasoning_msgs::CompoundTerm& term_msg = *it;
+    for(vector<reasoning_msgs::Term>::const_iterator it = req.facts.begin(); it != req.facts.end(); ++it) {
+        const reasoning_msgs::Term& term_msg = *it;
 
         PlTermv av(1);
         map<string, PlTerm> str_to_var;
-        av[0] = msgToProlog(term_msg, str_to_var);
+        av[0] = msgToProlog(term_msg.root, term_msg, str_to_var);
 
         ROS_INFO("?- \033[1m%s(%s)\033[0m", action.c_str(), (char*)av[0]);
         PlQuery q(action.c_str(), av);
@@ -210,7 +211,7 @@ bool loadDatabase(const string& filename) {
     return PlCall("consult", PlTermv(filename.c_str()));
 }
 
-bool loadDatabase(reasoning_srvs::LoadDatabase::Request& req, reasoning_srvs::LoadDatabase::Response& resp) {
+bool loadDatabase(reasoning_msgs::LoadDatabase::Request& req, reasoning_msgs::LoadDatabase::Response& resp) {
     if (!loadDatabase(req.db_filename)) {
         resp.result = "Failed to load database: " + req.db_filename;
         ROS_ERROR("%s", resp.result.c_str());

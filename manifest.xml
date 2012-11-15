@@ -12,10 +12,7 @@
   <depend package="roscpp"/> 
   <depend package="problib"/> 
   <depend package="reasoning_msgs"/>
-  <depend package="reasoning_srvs"/>
-  <depend package="object_msgs"/>
-  <depend package="probability_msgs"/>
-  <depend package="tue_world_model"/>
+  <depend package="problib"/>
 
   <!--rosdep name="swi-prolog" / -->
 
