@@ -20,13 +20,7 @@
 
 #include <problib/conversions.h>
 
-/*
-#include <WorldModelROS.h>
-#include <mht_old/MHTObject.h>
-#include <storage/SemanticObject.h>
-#include <core/PropertySet.h>
-#include <core/Property.h>
-*/
+#include <world_model/WorldModelROS.h>
 
 #include <vector>
 #include <string>
@@ -37,52 +31,88 @@ using namespace std;
 
 //map<string, vector<Compound*> > facts_;
 
-//WorldModelROS* world_model_;
+mhf::WorldModelROS* world_model_;
 
-PlCompound msgToProlog(const reasoning_msgs::TermImpl& msg, const reasoning_msgs::Term& full_term_msg, map<string, PlTerm>& str_to_var) {
-    PlTermv args_prolog(msg.arguments.size());
-
-    for(unsigned int i = 0; i < msg.arguments.size(); ++i) {
-        const reasoning_msgs::Argument& arg_msg = msg.arguments[i];
-        if (arg_msg.type == reasoning_msgs::Argument::VARIABLE) {
-            // argument is a variable
-
-            map<string, PlTerm>::iterator it_var = str_to_var.find(arg_msg.variable);
-            if (it_var != str_to_var.end()) {
-                // known variable
-                args_prolog[i] = it_var->second;
-            } else {
-                // unknown variable, so add to map
-                str_to_var[arg_msg.variable] = args_prolog[i];
-            }
-        } else if (arg_msg.type == reasoning_msgs::Argument::CONSTANT) {
-            // argument is a value
-
-            if (arg_msg.constant.type == reasoning_msgs::Constant::STRING) {
-                args_prolog[i] = arg_msg.constant.str.c_str();
-            } else if (arg_msg.constant.type == reasoning_msgs::Constant::NUMBER) {
-                args_prolog[i] = arg_msg.constant.num;
-            } else if (arg_msg.constant.type == reasoning_msgs::Constant::NUMBER_ARRAY) {
-                PlTail list(args_prolog[i]);
-
-                for(unsigned int i = 0; i < arg_msg.constant.num_array.size(); ++i) {
-                    list.append(PlTerm(arg_msg.constant.num_array[i]));
-                }
-                list.close();
-
-            } else if (arg_msg.constant.type == reasoning_msgs::Constant::PDF) {
-                cout << "CANNOT ADD PDF's TO THE PROLOG DATABASE YET." << endl;
-            }
-        } else if (arg_msg.type == reasoning_msgs::Argument::COMPOUND) {
-            args_prolog[i] = msgToProlog(full_term_msg.sub_terms[arg_msg.term_ptr], full_term_msg, str_to_var);
+PlTerm MsgToPrologTerm(const reasoning_msgs::TermImpl& msg, const reasoning_msgs::Term& full_term_msg, map<string, PlTerm>& str_to_var) {
+    if (msg.type == reasoning_msgs::TermImpl::VARIABLE) {
+        // term is a variable
+        map<string, PlTerm>::iterator it_var = str_to_var.find(msg.variable);
+        if (it_var != str_to_var.end()) {
+            // known variable
+            return it_var->second;
         } else {
-            ROS_ERROR_STREAM("Received argument with unspecified type:\n" << arg_msg);
+            // unknown variable, so add to map
+            PlTerm var;
+            str_to_var[msg.variable] = var;
+            return var;
+        }
+    } else if (msg.type == reasoning_msgs::TermImpl::CONSTANT) {
+        // term is a constant
+        if (msg.constant.type == reasoning_msgs::Constant::STRING) {
+            return PlTerm(msg.constant.str.c_str());
+        } else if (msg.constant.type == reasoning_msgs::Constant::NUMBER) {
+            return PlTerm(msg.constant.num);
+        } else if (msg.constant.type == reasoning_msgs::Constant::NUMBER_ARRAY) {
+            PlTerm term;
+            PlTail list(term);
+
+            for(unsigned int i = 0; i < msg.constant.num_array.size(); ++i) {
+                list.append(PlTerm(msg.constant.num_array[i]));
+            }
+            list.close();
+            return term;
+        } else if (msg.constant.type == reasoning_msgs::Constant::PDF) {
+            ROS_ERROR("CANNOT ADD PDF's TO THE PROLOG DATABASE YET.");
+            return PlTerm("PDF");
+        }
+    } else if (msg.type == reasoning_msgs::TermImpl::COMPOUND) {
+        // term is a compound
+        PlTermv args(msg.sub_term_ptrs.size());
+
+        for(unsigned int i = 0; i < msg.sub_term_ptrs.size(); ++i) {
+            args[i] = MsgToPrologTerm(full_term_msg.sub_terms[msg.sub_term_ptrs[i]], full_term_msg, str_to_var);
+        }
+
+        return PlCompound(msg.functor.c_str(), args);
+    }
+
+    ROS_ERROR_STREAM("UNKNOWN TERM MESSAGE: " << msg);
+    return PlTerm("UNKNOWN");
+}
+
+void prologTermToMsg(const PlTerm& term, const map<string, PlTerm>& str_to_var, reasoning_msgs::TermImpl& msg, reasoning_msgs::Term& full_term_msg) {
+    try {
+        msg.constant.num = (double)term;
+        msg.constant.type = reasoning_msgs::Constant::NUMBER;
+        msg.type = reasoning_msgs::TermImpl::CONSTANT;
+        return;
+    } catch(const PlTypeError& e) {
+    }
+
+    if (term.arity() == 0) {
+        // constant (either a number or string)
+        msg.type = reasoning_msgs::TermImpl::CONSTANT;
+
+        msg.constant.str = (char*)term;
+        msg.constant.type = reasoning_msgs::Constant::STRING;
+    } else {
+        // compound
+        msg.type = reasoning_msgs::TermImpl::COMPOUND;
+
+        msg.functor = term.name();
+
+        for(int i = 0; i < term.arity(); ++i) {
+            reasoning_msgs::TermImpl sub_term;
+            prologTermToMsg(term[i+1], str_to_var, sub_term, full_term_msg);
+            msg.sub_term_ptrs.push_back(full_term_msg.sub_terms.size());
+            full_term_msg.sub_terms.push_back(sub_term);
         }
     }
-    return PlCompound(msg.functor.c_str(), args_prolog);
 }
 
 reasoning_msgs::BindingSet prologToBindingSetMsg(const map<string, PlTerm>& str_to_var) {
+    cout << "prologToBindingSetMsg" << endl;
+
     reasoning_msgs::BindingSet binding_set;
 
 	for(map<string, PlTerm>::const_iterator it = str_to_var.begin(); it != str_to_var.end(); ++it) {
@@ -92,25 +122,12 @@ reasoning_msgs::BindingSet prologToBindingSetMsg(const map<string, PlTerm>& str_
 
 		const PlTerm& term = it->second;
 
-		if ((string)term.name() == ".") {
-            binding.value.type = reasoning_msgs::Constant::NUMBER_ARRAY;
-
-            vector<double> vec;
-
-			PlTail list(term);
-
-			PlTerm e;
-			while(list.next(e)) {
-                binding.value.num_array.push_back((double)e);
-			}
-
-		} else {
-            binding.value.type = reasoning_msgs::Constant::STRING;
-            binding.value.str = term.name();
-		}
+        prologTermToMsg(term, str_to_var, binding.value.root, binding.value);
 
         binding_set.bindings.push_back(binding);
 	}
+
+    cout << "prologToBindingSetMsg - end" << endl;
 
 	return binding_set;
 }
@@ -123,21 +140,11 @@ bool proccessQuery(reasoning_msgs::Query::Request& req, reasoning_msgs::Query::R
 
     PlTermv av(1);
     map<string, PlTerm> str_to_var;
-    av[0] = msgToProlog(req.term.root, req.term, str_to_var);
+    av[0] = MsgToPrologTerm(req.term.root, req.term, str_to_var);
 
     stringstream print_out;    
     print_out << "?- ";
     print_out << (char*)av[0];
-
-    /*
-    for(vector<reasoning_msgs::CompoundTerm>::const_iterator it = req.conjuncts.begin(); it != req.conjuncts.end(); ++it) {
-        const reasoning_msgs::CompoundTerm& term_msg = *it;
-        PlTerm term = msgToProlog(term_msg, str_to_var);
-        print_out << (char*)term << ", ";
-        goal_list.append(term);
-    }
-    goal_list.close();
-    */
 
     ROS_INFO("%s", print_out.str().c_str());
 
@@ -148,7 +155,7 @@ bool proccessQuery(reasoning_msgs::Query::Request& req, reasoning_msgs::Query::R
 
             stringstream s_bindings;
             for(map<string, PlTerm>::iterator it_bind = str_to_var.begin(); it_bind != str_to_var.end(); ++it_bind) {
-                s_bindings << it_bind->first << " = " << (char*)it_bind->second << " ";
+                s_bindings << it_bind->first << " = " << (char*)(it_bind->second) << " ";
             }
             ROS_INFO("   %s", s_bindings.str().c_str());
 
@@ -189,7 +196,7 @@ bool proccessAssert(reasoning_msgs::Assert::Request& req, reasoning_msgs::Assert
 
         PlTermv av(1);
         map<string, PlTerm> str_to_var;
-        av[0] = msgToProlog(term_msg.root, term_msg, str_to_var);
+        av[0] = MsgToPrologTerm(term_msg.root, term_msg, str_to_var);
 
         ROS_INFO("?- \033[1m%s(%s)\033[0m", action.c_str(), (char*)av[0]);
         PlQuery q(action.c_str(), av);
@@ -220,9 +227,10 @@ bool loadDatabase(reasoning_msgs::LoadDatabase::Request& req, reasoning_msgs::Lo
 }
 
 int main(int argc, char **argv) {
+
 	// Initialize node
 	ros::init(argc, argv, "reasoner");
-	ros::NodeHandle nh_private("~");
+    ros::NodeHandle nh_private("~");
 
 	// Initialize Prolog Engine
     putenv("SWI_HOME_DIR=/usr/lib/swi-prolog");
@@ -243,6 +251,10 @@ int main(int argc, char **argv) {
         ROS_ERROR("Failed to load database: %s", db_filename.c_str());
         return 1;
     }
+
+    // create world model
+    //world_model_ = new mhf::WorldModelROS();
+    //world_model_->startThreaded();
 
     ros::ServiceServer query_service = nh_private.advertiseService("query", proccessQuery);
     ros::ServiceServer assert_service = nh_private.advertiseService("assert", proccessAssert);

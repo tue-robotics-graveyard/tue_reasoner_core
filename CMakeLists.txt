@@ -45,7 +45,8 @@ message("${SWIPL_LIB}")
 include_directories(${PROJECT_SOURCE_DIR}/3rdparty)
 
 # to show include files in Qt Creator
-file(GLOB_RECURSE INCLUDE_FILES include/*.h)
+file(GLOB_RECURSE HEADER_FILES include/*.h)
+file(GLOB_RECURSE HEADER_FILES_3RD 3rdparty/*.h)
 
 rosbuild_add_executable(reasoner src/Value.cpp
 								 src/Term.cpp
@@ -54,7 +55,8 @@ rosbuild_add_executable(reasoner src/Value.cpp
 								 src/BindingSet.cpp
 								 src/Parser.cpp
                                                                  src/reasoner.cpp
-                                                                 ${INCLUDE_FILES}
+                                                                 ${HEADER_FILES}
+                                                                 ${HEADER_FILES_3RD}
 )
 
 target_link_libraries(reasoner ${SWIPL_LIB})

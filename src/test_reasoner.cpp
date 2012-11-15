@@ -18,35 +18,87 @@ using namespace std;
 ros::ServiceClient assert_client;
 ros::ServiceClient query_client;
 
-reasoning_msgs::Argument varArgument(const string& var) {
-    reasoning_msgs::Argument arg;
-    arg.type = reasoning_msgs::Argument::VARIABLE;
-    arg.variable = var;
-    return arg;
-}
-
-reasoning_msgs::Argument constArgument(const string& str) {
-    reasoning_msgs::Argument arg;
-    arg.type = reasoning_msgs::Argument::CONSTANT;
-    arg.constant.type = reasoning_msgs::Constant::STRING;
-    arg.constant.str = str;
-    return arg;
-}
-
-reasoning_msgs::Argument constArgument(const vector<double>& vec) {
-    reasoning_msgs::Argument arg;
-    arg.type = reasoning_msgs::Argument::CONSTANT;
-    arg.constant.type = reasoning_msgs::Constant::NUMBER_ARRAY;
-    arg.constant.num_array = vec;
-    return arg;
-}
-
-reasoning_msgs::Term compoundTerm(const string& pred, const reasoning_msgs::Argument& arg1, const reasoning_msgs::Argument& arg2) {
+reasoning_msgs::Term variable(const string& var) {
     reasoning_msgs::Term term;
-    term.root.functor = pred;
-    term.root.arguments.push_back(arg1);
-    term.root.arguments.push_back(arg2);
+    term.root.type = reasoning_msgs::TermImpl::VARIABLE;
+    term.root.variable = var;
     return term;
+}
+
+reasoning_msgs::Term constant(const string& str) {
+    reasoning_msgs::Term term;
+    term.root.type = reasoning_msgs::TermImpl::CONSTANT;
+    term.root.constant.type = reasoning_msgs::Constant::STRING;
+    term.root.constant.str = str;
+    return term;
+}
+
+reasoning_msgs::Term constant(const vector<double>& vec) {
+    reasoning_msgs::Term term;
+    term.root.type = reasoning_msgs::TermImpl::CONSTANT;
+    term.root.constant.type = reasoning_msgs::Constant::NUMBER_ARRAY;
+    term.root.constant.num_array = vec;
+    return term;
+}
+
+reasoning_msgs::Term compound(const string& functor, const reasoning_msgs::Term& arg1, const reasoning_msgs::Term& arg2) {
+    reasoning_msgs::Term term;
+    term.root.type = reasoning_msgs::TermImpl::COMPOUND;
+    term.root.functor = functor;
+    term.sub_terms.push_back(arg1.root);   // only works for non-compound arg1
+    term.sub_terms.push_back(arg2.root);   // only works for non-compound arg2
+    term.root.sub_term_ptrs.push_back(0);
+    term.root.sub_term_ptrs.push_back(1);
+    return term;
+}
+
+std::string toString(const reasoning_msgs::TermImpl& msg, const reasoning_msgs::Term& full_term_msg) {
+    if (msg.type == reasoning_msgs::TermImpl::VARIABLE) {
+        return msg.variable;
+    } else if (msg.type == reasoning_msgs::TermImpl::CONSTANT) {
+        if (msg.constant.type == reasoning_msgs::Constant::STRING) {
+            return "'" + msg.constant.str + "'";
+        } else if (msg.constant.type == reasoning_msgs::Constant::NUMBER) {
+            stringstream ss;
+            ss << msg.constant.num;
+            return ss.str();
+        } else if (msg.constant.type == reasoning_msgs::Constant::NUMBER_ARRAY) {
+            stringstream ss;
+            ss << "[";
+            for(unsigned int i = 0; i < msg.constant.num_array.size(); ++i) {
+                ss << " " << msg.constant.num_array[i];
+            }
+            ss << "]";
+            return ss.str();
+        }  else if (msg.constant.type == reasoning_msgs::Constant::PDF) {
+            pbl::PDF* pdf = pbl::msgToPDF(msg.constant.pdf);
+            if (pdf) {
+                return pdf->toString();
+            } else {
+                return "INVALID_PDF";
+            }
+        }
+    } else if (msg.type == reasoning_msgs::TermImpl::COMPOUND) {
+        stringstream ss;
+        ss << msg.functor << "(";
+        for(unsigned int i = 0; i < msg.sub_term_ptrs.size(); ++i) {
+            ss << toString(full_term_msg.sub_terms[msg.sub_term_ptrs[i]], full_term_msg);
+            if (i + 1 < msg.sub_term_ptrs.size()) {
+                ss << ", ";
+            }
+        }
+        ss << ")";
+        return ss.str();
+    }
+
+    return "_UNKNOWN_";
+}
+
+std::string toString(const reasoning_msgs::Term& term_msg) {
+    stringstream ss;
+    ss << term_msg;
+    //return ss.str();
+    return toString(term_msg.root, term_msg);
 }
 
 bool assertKnowledge(const reasoning_msgs::Assert::Request& req) {
@@ -82,26 +134,7 @@ bool queryKnowledge(const reasoning_msgs::Query::Request& req) {
                 } else {
                     for(vector<reasoning_msgs::Binding>::const_iterator it_b = binding_set.bindings.begin(); it_b != binding_set.bindings.end(); ++it_b) {
                         const reasoning_msgs::Binding& binding = *it_b;
-                        cout << binding.variable << " = ";
-
-                        if (binding.value.type == reasoning_msgs::Constant::STRING) {
-                            cout << binding.value.str;
-                        } else if (binding.value.type == reasoning_msgs::Constant::NUMBER) {
-                            cout << binding.value.num;
-                        } else if (binding.value.type == reasoning_msgs::Constant::NUMBER_ARRAY) {
-                            cout << "[";
-                            for(unsigned int i = 0; i < binding.value.num_array.size(); ++i) {
-                                cout << " " << binding.value.num_array[i];
-                            }
-                            cout << "]";
-                        } else if (binding.value.type == reasoning_msgs::Constant::PDF) {
-                            pbl::PDF* pdf = pbl::msgToPDF(binding.value.pdf);
-                            if (pdf) {
-                                cout << pdf->toString();
-                            } else {
-                                cout << "INVALID PDF";
-                            }
-                        }
+                        cout << binding.variable << " = " << toString(binding.value);
                         cout << "\t";
                     }
                     cout << endl;
@@ -151,11 +184,13 @@ int main(int argc, char **argv) {
     /* * * * * * * * * TEST * * * * * * * * */
 
     reasoning_msgs::Query::Request query1;
-    query1.term = compoundTerm("is_class_at_coordinates", constArgument("exit"), varArgument("Y"));
+    query1.term = compound("is_class_at_coordinates", constant("exit"), variable("Y"));
     queryKnowledge(query1);
 
+    return 0;
+
     reasoning_msgs::Assert::Request assert;
-    assert.facts.push_back(compoundTerm("type", constArgument("milk"), constArgument("drink")));
+    assert.facts.push_back(compound("type", constant("milk"), constant("drink")));
     assertKnowledge(assert);
 
     reasoning_msgs::Assert::Request assert2;
@@ -163,19 +198,19 @@ int main(int argc, char **argv) {
     vec.push_back(1);
     vec.push_back(2);
     vec.push_back(3);
-    assert2.facts.push_back(compoundTerm("type", constArgument("test"), constArgument(vec)));
+    assert2.facts.push_back(compound("type", constant("test"), constant(vec)));
     assertKnowledge(assert2);
 
     cout << "- - - - - - - - - - - - - - - - - - " << endl;
 
     reasoning_msgs::Query::Request query;
-    query.term = compoundTerm("type", varArgument("X"), varArgument("Y"));
+    query.term = compound("type", variable("X"), variable("Y"));
     //query.conjuncts.push_back(compoundTerm("location", varArgument("X"), constArgument("living_room")));
     queryKnowledge(query);
 
     reasoning_msgs::Assert::Request retract;
     retract.action = reasoning_msgs::Assert::Request::RETRACT;
-    retract.facts.push_back(compoundTerm("type", constArgument("coke"), varArgument("Y")));
+    retract.facts.push_back(compound("type", constant("coke"), variable("Y")));
     assertKnowledge(retract);
 
     cout << "- - - - - - - - - - - - - - - - - - " << endl;
