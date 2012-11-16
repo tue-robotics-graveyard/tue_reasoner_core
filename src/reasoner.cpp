@@ -89,6 +89,7 @@ void prologTermToMsg(const PlTerm& term, const map<string, PlTerm>& str_to_var, 
     } catch(const PlTypeError& e) {
     }
 
+    try {
     if (term.arity() == 0) {
         // constant (either a number or string)
         msg.type = reasoning_msgs::TermImpl::CONSTANT;
@@ -107,6 +108,11 @@ void prologTermToMsg(const PlTerm& term, const map<string, PlTerm>& str_to_var, 
             msg.sub_term_ptrs.push_back(full_term_msg.sub_terms.size());
             full_term_msg.sub_terms.push_back(sub_term);
         }
+    }
+    } catch (const PlTypeError& e) {
+        msg.type = reasoning_msgs::TermImpl::VARIABLE;
+        msg.variable = (char*)term;
+        return;
     }
 }
 

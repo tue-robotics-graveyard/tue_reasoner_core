@@ -184,8 +184,14 @@ int main(int argc, char **argv) {
     /* * * * * * * * * TEST * * * * * * * * */
 
     reasoning_msgs::Query::Request query1;
+    query1.term = compound("current_predicate", variable("P"), variable("_"));
+    queryKnowledge(query1);
+
+    /*
+    reasoning_msgs::Query::Request query1;
     query1.term = compound("is_class_at_coordinates", constant("exit"), variable("Y"));
     queryKnowledge(query1);
+    */
 
     return 0;
 
