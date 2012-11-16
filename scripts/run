@@ -1,2 +1,0 @@
-#!/bin/bash
-roslaunch --wait tue_reasoner start.launch args:="a"
