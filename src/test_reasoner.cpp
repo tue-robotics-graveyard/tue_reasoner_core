@@ -200,7 +200,7 @@ int main(int argc, char **argv) {
     /* * * * * * * * * TEST * * * * * * * * */
 
     reasoning_msgs::Query::Request query1;
-    query1.term = compound("position", variable("X"), variable("P"));
+    query1.term = compound("type", variable("X"), variable("P"));
     queryKnowledge(query1);
 
     /*

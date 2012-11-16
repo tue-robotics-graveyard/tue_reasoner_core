@@ -105,6 +105,38 @@ PREDICATE(position_list, 2) {
     return TRUE;
 }
 
+PREDICATE(type_list, 2) {
+    int obj_id = IDStringToInt((char*)A1);
+    PlTail type_list(A2);
+
+    ROS_ERROR_STREAM("type" << (char*)A1 << (char*)A2);
+
+    const list<mhf::SemanticObject*> objs = world_model_->getMAPObjects();
+    for(list<mhf::SemanticObject*>::const_iterator it_obj = objs.begin(); it_obj != objs.end(); ++it_obj) {
+        const mhf::SemanticObject& obj = **it_obj;
+        if (obj_id < 0 || obj_id == obj.getID()) {
+            ROS_INFO("A");
+            const mhf::Property* class_prop = obj.getProperty("class_label");
+            if (class_prop) {
+                const pbl::PMF* class_pmf = pbl::PDFtoPMF(class_prop->getValue());
+                if (class_pmf) {
+                    string class_label;
+                    class_pmf->getExpectedValue(class_label);
+
+                    PlTermv binding(2);
+                    binding[0] = IDIntToString(obj.getID()).c_str();
+                    binding[1] = class_label.c_str();
+
+                    type_list.append(PlCompound("binding", binding));
+                }
+            }
+        }
+    }
+
+    type_list.close();
+    return TRUE;
+}
+
 PlTerm MsgToPrologTerm(const reasoning_msgs::TermImpl& msg, const reasoning_msgs::Term& full_term_msg, map<string, PlTerm>& str_to_var) {
     if (msg.type == reasoning_msgs::TermImpl::VARIABLE) {
         // term is a variable

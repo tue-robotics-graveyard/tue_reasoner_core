@@ -2,12 +2,11 @@
 %                  TAXONOMY
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-:- dynamic type/2.
 :- dynamic location/2.
 :- dynamic is_class_at_coordinates/2.
 
-type(coke, drink).
-type(sprite, drink).
+%type(coke, drink).
+%type(sprite, drink).
 
 location(sprite, kitchen).
 location(coke, living_room).
