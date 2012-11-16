@@ -41,6 +41,22 @@ reasoning_msgs::Term constant(const vector<double>& vec) {
     return term;
 }
 
+reasoning_msgs::Term compound(const string& functor) {
+    reasoning_msgs::Term term;
+    term.root.type = reasoning_msgs::TermImpl::COMPOUND;
+    term.root.functor = functor;
+    return term;
+}
+
+reasoning_msgs::Term compound(const string& functor, const reasoning_msgs::Term& arg1) {
+    reasoning_msgs::Term term;
+    term.root.type = reasoning_msgs::TermImpl::COMPOUND;
+    term.root.functor = functor;
+    term.sub_terms.push_back(arg1.root);   // only works for non-compound arg1
+    term.root.sub_term_ptrs.push_back(0);
+    return term;
+}
+
 reasoning_msgs::Term compound(const string& functor, const reasoning_msgs::Term& arg1, const reasoning_msgs::Term& arg2) {
     reasoning_msgs::Term term;
     term.root.type = reasoning_msgs::TermImpl::COMPOUND;
@@ -184,7 +200,7 @@ int main(int argc, char **argv) {
     /* * * * * * * * * TEST * * * * * * * * */
 
     reasoning_msgs::Query::Request query1;
-    query1.term = compound("current_predicate", variable("P"), variable("_"));
+    query1.term = compound("position", variable("X"), variable("P"));
     queryKnowledge(query1);
 
     /*

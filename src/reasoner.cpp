@@ -21,6 +21,8 @@
 #include <problib/conversions.h>
 
 #include <world_model/WorldModelROS.h>
+#include <world_model/storage/SemanticObject.h>
+#include <world_model/core/Property.h>
 
 #include <vector>
 #include <string>
@@ -32,6 +34,76 @@ using namespace std;
 //map<string, vector<Compound*> > facts_;
 
 mhf::WorldModelROS* world_model_;
+
+string IDIntToString(int ID) {
+    stringstream ss;
+    ss << "id-" << ID;
+    return ss.str();
+}
+
+int IDStringToInt(const string& ID) {
+    if(ID.substr(0, 3) == "id-") {
+        return atoi(ID.substr(3).c_str());
+    }
+    return -1;
+}
+
+/*
+ * Get the most probable Gaussian from a pdf
+ */
+const pbl::Gaussian* getBestGaussian(const pbl::PDF& pdf, double min_weight = 0) {
+    if (pdf.type() == pbl::PDF::GAUSSIAN) {
+        return pbl::PDFtoGaussian(pdf);
+    } else if (pdf.type() == pbl::PDF::MIXTURE) {
+        const pbl::Mixture* mix = pbl::PDFtoMixture(pdf);
+
+        if (mix){
+            const pbl::Gaussian* G_best = 0;
+            double w_best = min_weight;
+            for(int i = 0; i < mix->components(); ++i) {
+                const pbl::PDF& pdf = mix->getComponent(i);
+                const pbl::Gaussian* G = pbl::PDFtoGaussian(pdf);
+                double w = mix->getWeight(i);
+                if (G && w > w_best) {
+                    G_best = G;
+                    w_best = w;
+                }
+            }
+            return G_best;
+        }
+    }
+    return 0;
+}
+
+PREDICATE(position_list, 2) {
+    int obj_id = IDStringToInt((char*)A1);
+    PlTail position_list(A2);
+
+    const list<mhf::SemanticObject*> objs = world_model_->getMAPObjects();
+    for(list<mhf::SemanticObject*>::const_iterator it_obj = objs.begin(); it_obj != objs.end(); ++it_obj) {
+        const mhf::SemanticObject& obj = **it_obj;
+        if (obj_id < 0 || obj_id == obj.getID()) {
+            const mhf::Property* pos_prop = obj.getProperty("position");
+            const pbl::Gaussian* pos_gauss = getBestGaussian(pos_prop->getValue());
+            if (pos_gauss) {
+                const pbl::Vector& mean = pos_gauss->getMean();
+                PlTermv xyz(3);
+                xyz[0] = mean(0);
+                xyz[1] = mean(1);
+                xyz[2] = mean(2);
+
+                PlTermv binding(2);
+                binding[0] = IDIntToString(obj.getID()).c_str();
+                binding[1] = PlCompound("point", xyz);
+
+                position_list.append(PlCompound("binding", binding));
+            }
+        }
+    }
+
+    position_list.close();
+    return TRUE;
+}
 
 PlTerm MsgToPrologTerm(const reasoning_msgs::TermImpl& msg, const reasoning_msgs::Term& full_term_msg, map<string, PlTerm>& str_to_var) {
     if (msg.type == reasoning_msgs::TermImpl::VARIABLE) {
@@ -259,20 +331,17 @@ int main(int argc, char **argv) {
     }
 
     // create world model
-    //world_model_ = new mhf::WorldModelROS();
-    //world_model_->startThreaded();
+    world_model_ = new mhf::WorldModelROS();
+    world_model_->registerEvidenceTopic("/world_evidence");
+    world_model_->startThreaded();
 
     ros::ServiceServer query_service = nh_private.advertiseService("query", proccessQuery);
     ros::ServiceServer assert_service = nh_private.advertiseService("assert", proccessAssert);
     ros::ServiceServer load_db_service = nh_private.advertiseService("load_database", loadDatabase);
 
-    //world_model_ = new WorldModelROS();
-    //world_model_->registerEvidenceTopic("/world_evidence");
-    //world_model_->startThreaded();
-
     ros::spin();
 
-    //delete world_model_;
+    delete world_model_;
 
 	return 0;
 }
