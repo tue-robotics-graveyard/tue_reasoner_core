@@ -214,7 +214,7 @@ if __name__ == "__main__":
     query              = rospy.ServiceProxy('/reasoner/query', reasoning_msgs.srv.Query)
     assert_knowledge   = rospy.ServiceProxy('/reasoner/assert', reasoning_msgs.srv.Assert)
 
-    term1 = Compound("type", "X", "Y")
+    term1 = Compound("fact", "X")
 
     reasoning_query = reasoning_msgs.srv.QueryRequest()
     reasoning_query.term = term_to_msg(term1)

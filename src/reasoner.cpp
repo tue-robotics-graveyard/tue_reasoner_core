@@ -221,8 +221,6 @@ void prologTermToMsg(const PlTerm& term, const map<string, PlTerm>& str_to_var, 
 }
 
 reasoning_msgs::BindingSet prologToBindingSetMsg(const map<string, PlTerm>& str_to_var) {
-    cout << "prologToBindingSetMsg" << endl;
-
     reasoning_msgs::BindingSet binding_set;
 
 	for(map<string, PlTerm>::const_iterator it = str_to_var.begin(); it != str_to_var.end(); ++it) {
@@ -236,8 +234,6 @@ reasoning_msgs::BindingSet prologToBindingSetMsg(const map<string, PlTerm>& str_
 
         binding_set.bindings.push_back(binding);
 	}
-
-    cout << "prologToBindingSetMsg - end" << endl;
 
 	return binding_set;
 }
