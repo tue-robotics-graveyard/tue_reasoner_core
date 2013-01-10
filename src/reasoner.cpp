@@ -109,13 +109,10 @@ PREDICATE(type_list, 2) {
     int obj_id = IDStringToInt((char*)A1);
     PlTail type_list(A2);
 
-    ROS_ERROR_STREAM("type" << (char*)A1 << (char*)A2);
-
     const list<mhf::SemanticObject*> objs = world_model_->getMAPObjects();
     for(list<mhf::SemanticObject*>::const_iterator it_obj = objs.begin(); it_obj != objs.end(); ++it_obj) {
         const mhf::SemanticObject& obj = **it_obj;
         if (obj_id < 0 || obj_id == obj.getID()) {
-            ROS_INFO("A");
             const mhf::Property* class_prop = obj.getProperty("class_label");
             if (class_prop) {
                 const pbl::PMF* class_pmf = pbl::PDFtoPMF(class_prop->getValue());
