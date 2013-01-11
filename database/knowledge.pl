@@ -13,9 +13,9 @@ waypoint(tue_test_lab, clean_up, meeting_point, pose_2d(1.293, -0.445, 0.914)).
 waypoint(tue_test_lab, clean_up, kitchen, pose_2d(4.315, 1.141, -0.841)).
 waypoint(tue_test_lab, clean_up, living_room, pose_2d(4.315, 1.141, -0.841)).
 
+exploration_target(tue_test_lab, clean_up, living_room, bed_cabinet_1).
 exploration_target(tue_test_lab, clean_up, living_room, cabinet_expedit_1).
 exploration_target(tue_test_lab, clean_up, living_room, bed_1).
-exploration_target(tue_test_lab, clean_up, living_room, bed_cabinet_1).
 
 base_pose(cabinet_expedit_1, pose_2d(4.952,  1.351,  1.667)).
 base_pose(bed_1,             pose_2d(6.058, -1.598,  3.113)).
