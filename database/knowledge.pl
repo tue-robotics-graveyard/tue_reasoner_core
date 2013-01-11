@@ -1,7 +1,7 @@
 :- dynamic challenge/1.
 :- dynamic environment/1.
 :- dynamic state/2.
-:- dynamic explored/2.
+:- dynamic explored/1.
 
 environment(tue_test_lab).
 
