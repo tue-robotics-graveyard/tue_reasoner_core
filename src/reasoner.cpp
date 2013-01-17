@@ -134,6 +134,36 @@ PREDICATE(type_list, 2) {
     return TRUE;
 }
 
+PREDICATE(object_property_list, 3) {
+    int obj_id = IDStringToInt((char*)A1);
+    string property = (char*)A2;
+    PlTail property_list(A3);
+
+    const list<mhf::SemanticObject*> objs = world_model_->getMAPObjects();
+    for(list<mhf::SemanticObject*>::const_iterator it_obj = objs.begin(); it_obj != objs.end(); ++it_obj) {
+        const mhf::SemanticObject& obj = **it_obj;
+        if (obj_id < 0 || obj_id == obj.getID()) {
+            const mhf::Property* class_prop = obj.getProperty(property);
+            if (class_prop) {
+                const pbl::PMF* class_pmf = pbl::PDFtoPMF(class_prop->getValue());
+                if (class_pmf) {
+                    string class_label;
+                    class_pmf->getExpectedValue(class_label);
+
+                    PlTermv binding(2);
+                    binding[0] = IDIntToString(obj.getID()).c_str();
+                    binding[1] = class_label.c_str();
+
+                    property_list.append(PlCompound("binding", binding));
+                }
+            }
+        }
+    }
+
+    property_list.close();
+    return TRUE;
+}
+
 PlTerm MsgToPrologTerm(const reasoning_msgs::TermImpl& msg, const reasoning_msgs::Term& full_term_msg, map<string, PlTerm>& str_to_var) {
     if (msg.type == reasoning_msgs::TermImpl::VARIABLE) {
         // term is a variable

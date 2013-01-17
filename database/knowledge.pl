@@ -38,3 +38,5 @@ exploration_target(Room, Target) :-
     challenge(Challenge),
     environment(Env),
     exploration_target(Env, Challenge, Room, Target).
+
+type(coke, drink).
