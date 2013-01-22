@@ -371,18 +371,25 @@ int main(int argc, char **argv) {
 
     PlEngine prolog_engine(argc, argv);
 
-    string std_db_filename = "";
-    nh_private.getParam("std_database", std_db_filename);
-    if (!loadDatabase(std_db_filename)) {
-        ROS_ERROR("Failed to load database: %s", std_db_filename.c_str());
-        return 1;
-    }
+    for(int i_database = 1; true; ++i_database) {
+        stringstream s_param;
+        s_param << "database" << i_database;
 
-    string db_filename = "";
-    nh_private.getParam("database", db_filename);
-    if (!loadDatabase(db_filename)) {
-        ROS_ERROR("Failed to load database: %s", db_filename.c_str());
-        return 1;
+        XmlRpc::XmlRpcValue database_name;
+        if (nh_private.getParam(s_param.str(), database_name)) {
+            if (database_name.getType() != XmlRpc::XmlRpcValue::TypeString) {
+                ROS_ERROR("Each database name must be a string.");
+                return -1;
+            }
+
+            string database_name_str = (string)database_name;
+            if (!loadDatabase(database_name_str)) {
+                ROS_ERROR("Failed to load database: %s", (database_name_str).c_str());
+                return -1;
+            }
+        } else {
+            break;
+        }
     }
 
     // create world model
