@@ -2,8 +2,8 @@
 import roslib; roslib.load_manifest('tue_execution_pack')
 import rospy
 import threading
-import reasoning_msgs.msg
-import reasoning_msgs.srv
+import tue_reasoner_msgs.msg
+import tue_reasoner_msgs.srv
 
 ###########################################################################
 #                                                                         # 
@@ -139,26 +139,26 @@ class Disjunction(Compound):
 #                                                                         #
 ###########################################################################
 
-# returns type reasoning_msgs.msg.Term()
+# returns type tue_reasoner_msgs.msg.Term()
 def term_to_msg(term):
-    full_term_msg = reasoning_msgs.msg.Term()  
+    full_term_msg = tue_reasoner_msgs.msg.Term()  
     full_term_msg.root = term_to_msg2(term, full_term_msg)
     return full_term_msg
 
-# returns type reasoning_msgs.msg.TermImpl()
+# returns type tue_reasoner_msgs.msg.TermImpl()
 def term_to_msg2(term, full_term_msg):
-    term_msg = reasoning_msgs.msg.TermImpl()
+    term_msg = tue_reasoner_msgs.msg.TermImpl()
 
     if term.is_variable():
-        term_msg.type = reasoning_msgs.msg.TermImpl.VARIABLE
+        term_msg.type = tue_reasoner_msgs.msg.TermImpl.VARIABLE
         term_msg.variable = term.var_name
         return term_msg
     elif term.is_constant():
-        term_msg.type = reasoning_msgs.msg.TermImpl.CONSTANT
-        term_msg.constant.type = reasoning_msgs.msg.Constant.STRING
+        term_msg.type = tue_reasoner_msgs.msg.TermImpl.CONSTANT
+        term_msg.constant.type = tue_reasoner_msgs.msg.Constant.STRING
         term_msg.constant.str = term.string
     elif term.is_compound():
-        term_msg.type = reasoning_msgs.msg.TermImpl.COMPOUND
+        term_msg.type = tue_reasoner_msgs.msg.TermImpl.COMPOUND
         term_msg.functor = term.functor
         for i in range(term.get_arity()):
             sub_term_msg = term_to_msg2(term[i], full_term_msg)
@@ -166,22 +166,22 @@ def term_to_msg2(term, full_term_msg):
             full_term_msg.sub_terms.append(sub_term_msg)
     return term_msg
 
-# takes arguments: reasoning_msgs.msg.Term()
+# takes arguments: tue_reasoner_msgs.msg.Term()
 def msg_to_term(full_term_msg):
     return msg_to_term2(full_term_msg.root, full_term_msg)
 
-# takes arguments: reasoning_msgs.msg.Term()
+# takes arguments: tue_reasoner_msgs.msg.Term()
 def msg_to_term2(term_msg, full_term_msg):
-    if term_msg.type == reasoning_msgs.msg.TermImpl.CONSTANT:
-        if term_msg.constant.type == reasoning_msgs.msg.Constant.STRING:
+    if term_msg.type == tue_reasoner_msgs.msg.TermImpl.CONSTANT:
+        if term_msg.constant.type == tue_reasoner_msgs.msg.Constant.STRING:
             return Constant(term_msg.constant.str)
-        elif term_msg.constant.type == reasoning_msgs.msg.Constant.NUMBER:
+        elif term_msg.constant.type == tue_reasoner_msgs.msg.Constant.NUMBER:
             return Constant(str(term_msg.constant.num))
 
-    elif term_msg.type == reasoning_msgs.msg.TermImpl.VARIABLE:
+    elif term_msg.type == tue_reasoner_msgs.msg.TermImpl.VARIABLE:
         return Variable(term_msg.variable)
 
-    elif term_msg.type == reasoning_msgs.msg.TermImpl.COMPOUND:
+    elif term_msg.type == tue_reasoner_msgs.msg.TermImpl.COMPOUND:
         term = Compound(term_msg.functor)
         for i in range(len(term_msg.sub_term_ptrs)):
             sub_term = msg_to_term2(full_term_msg.sub_terms[term_msg.sub_term_ptrs[i]], full_term_msg)
@@ -211,12 +211,12 @@ def term_to_point(term):
   
 if __name__ == "__main__":
 
-    query              = rospy.ServiceProxy('/reasoner/query', reasoning_msgs.srv.Query)
-    assert_knowledge   = rospy.ServiceProxy('/reasoner/assert', reasoning_msgs.srv.Assert)
+    query              = rospy.ServiceProxy('/reasoner/query', tue_reasoner_msgs.srv.Query)
+    assert_knowledge   = rospy.ServiceProxy('/reasoner/assert', tue_reasoner_msgs.srv.Assert)
 
     term1 = Compound("fact", "X")
 
-    reasoning_query = reasoning_msgs.srv.QueryRequest()
+    reasoning_query = tue_reasoner_msgs.srv.QueryRequest()
     reasoning_query.term = term_to_msg(term1)
 
     query_result = query(reasoning_query)

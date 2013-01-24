@@ -10,7 +10,7 @@
   <url>http://ros.org/wiki/tue_reasoner</url>
   
   <depend package="roscpp"/> 
-  <depend package="reasoning_msgs"/>
+  <depend package="tue_reasoner_msgs"/>
   <depend package="tue_reasoner_interface"/>
   <depend package="problib"/>
   <depend package="world_model"/>

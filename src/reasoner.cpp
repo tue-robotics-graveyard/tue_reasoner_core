@@ -13,10 +13,10 @@
 #include "tue_reasoner/BindingSet.h"
 #include "tue_reasoner/Parser.h"
 
-#include <reasoning_msgs/Query.h>
-#include <reasoning_msgs/Assert.h>
-#include <reasoning_msgs/LoadDatabase.h>
-#include <reasoning_msgs/BindingSet.h>
+#include <tue_reasoner_msgs/Query.h>
+#include <tue_reasoner_msgs/Assert.h>
+#include <tue_reasoner_msgs/LoadDatabase.h>
+#include <tue_reasoner_msgs/BindingSet.h>
 
 #include <problib/conversions.h>
 
@@ -164,8 +164,8 @@ PREDICATE(object_property_list, 3) {
     return TRUE;
 }
 
-PlTerm MsgToPrologTerm(const reasoning_msgs::TermImpl& msg, const reasoning_msgs::Term& full_term_msg, map<string, PlTerm>& str_to_var) {
-    if (msg.type == reasoning_msgs::TermImpl::VARIABLE) {
+PlTerm MsgToPrologTerm(const tue_reasoner_msgs::TermImpl& msg, const tue_reasoner_msgs::Term& full_term_msg, map<string, PlTerm>& str_to_var) {
+    if (msg.type == tue_reasoner_msgs::TermImpl::VARIABLE) {
         // term is a variable
         map<string, PlTerm>::iterator it_var = str_to_var.find(msg.variable);
         if (it_var != str_to_var.end()) {
@@ -177,13 +177,13 @@ PlTerm MsgToPrologTerm(const reasoning_msgs::TermImpl& msg, const reasoning_msgs
             str_to_var[msg.variable] = var;
             return var;
         }
-    } else if (msg.type == reasoning_msgs::TermImpl::CONSTANT) {
+    } else if (msg.type == tue_reasoner_msgs::TermImpl::CONSTANT) {
         // term is a constant
-        if (msg.constant.type == reasoning_msgs::Constant::STRING) {
+        if (msg.constant.type == tue_reasoner_msgs::Constant::STRING) {
             return PlTerm(msg.constant.str.c_str());
-        } else if (msg.constant.type == reasoning_msgs::Constant::NUMBER) {
+        } else if (msg.constant.type == tue_reasoner_msgs::Constant::NUMBER) {
             return PlTerm(msg.constant.num);
-        } else if (msg.constant.type == reasoning_msgs::Constant::NUMBER_ARRAY) {
+        } else if (msg.constant.type == tue_reasoner_msgs::Constant::NUMBER_ARRAY) {
             PlTerm term;
             PlTail list(term);
 
@@ -192,11 +192,11 @@ PlTerm MsgToPrologTerm(const reasoning_msgs::TermImpl& msg, const reasoning_msgs
             }
             list.close();
             return term;
-        } else if (msg.constant.type == reasoning_msgs::Constant::PDF) {
+        } else if (msg.constant.type == tue_reasoner_msgs::Constant::PDF) {
             ROS_ERROR("CANNOT ADD PDF's TO THE PROLOG DATABASE YET.");
             return PlTerm("PDF");
         }
-    } else if (msg.type == reasoning_msgs::TermImpl::COMPOUND) {
+    } else if (msg.type == tue_reasoner_msgs::TermImpl::COMPOUND) {
         // term is a compound
         PlTermv args(msg.sub_term_ptrs.size());
 
@@ -211,11 +211,11 @@ PlTerm MsgToPrologTerm(const reasoning_msgs::TermImpl& msg, const reasoning_msgs
     return PlTerm("UNKNOWN");
 }
 
-void prologTermToMsg(const PlTerm& term, const map<string, PlTerm>& str_to_var, reasoning_msgs::TermImpl& msg, reasoning_msgs::Term& full_term_msg) {
+void prologTermToMsg(const PlTerm& term, const map<string, PlTerm>& str_to_var, tue_reasoner_msgs::TermImpl& msg, tue_reasoner_msgs::Term& full_term_msg) {
     try {
         msg.constant.num = (double)term;
-        msg.constant.type = reasoning_msgs::Constant::NUMBER;
-        msg.type = reasoning_msgs::TermImpl::CONSTANT;
+        msg.constant.type = tue_reasoner_msgs::Constant::NUMBER;
+        msg.type = tue_reasoner_msgs::TermImpl::CONSTANT;
         return;
     } catch(const PlTypeError& e) {
     }
@@ -223,36 +223,36 @@ void prologTermToMsg(const PlTerm& term, const map<string, PlTerm>& str_to_var, 
     try {
     if (term.arity() == 0) {
         // constant (either a number or string)
-        msg.type = reasoning_msgs::TermImpl::CONSTANT;
+        msg.type = tue_reasoner_msgs::TermImpl::CONSTANT;
 
         msg.constant.str = (char*)term;
-        msg.constant.type = reasoning_msgs::Constant::STRING;
+        msg.constant.type = tue_reasoner_msgs::Constant::STRING;
     } else {
         // compound
-        msg.type = reasoning_msgs::TermImpl::COMPOUND;
+        msg.type = tue_reasoner_msgs::TermImpl::COMPOUND;
 
         msg.functor = term.name();
 
         for(int i = 0; i < term.arity(); ++i) {
-            reasoning_msgs::TermImpl sub_term;
+            tue_reasoner_msgs::TermImpl sub_term;
             prologTermToMsg(term[i+1], str_to_var, sub_term, full_term_msg);
             msg.sub_term_ptrs.push_back(full_term_msg.sub_terms.size());
             full_term_msg.sub_terms.push_back(sub_term);
         }
     }
     } catch (const PlTypeError& e) {
-        msg.type = reasoning_msgs::TermImpl::VARIABLE;
+        msg.type = tue_reasoner_msgs::TermImpl::VARIABLE;
         msg.variable = (char*)term;
         return;
     }
 }
 
-reasoning_msgs::BindingSet prologToBindingSetMsg(const map<string, PlTerm>& str_to_var) {
-    reasoning_msgs::BindingSet binding_set;
+tue_reasoner_msgs::BindingSet prologToBindingSetMsg(const map<string, PlTerm>& str_to_var) {
+    tue_reasoner_msgs::BindingSet binding_set;
 
 	for(map<string, PlTerm>::const_iterator it = str_to_var.begin(); it != str_to_var.end(); ++it) {
 
-        reasoning_msgs::Binding binding;
+        tue_reasoner_msgs::Binding binding;
         binding.variable = it->first;
 
 		const PlTerm& term = it->second;
@@ -265,7 +265,7 @@ reasoning_msgs::BindingSet prologToBindingSetMsg(const map<string, PlTerm>& str_
 	return binding_set;
 }
 
-bool proccessQuery(reasoning_msgs::Query::Request& req, reasoning_msgs::Query::Response& res) {
+bool proccessQuery(tue_reasoner_msgs::Query::Request& req, tue_reasoner_msgs::Query::Response& res) {
 
     timespec t_start, t_end;
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t_start);
@@ -304,7 +304,7 @@ bool proccessQuery(reasoning_msgs::Query::Request& req, reasoning_msgs::Query::R
 	return true;
 }
 
-bool proccessAssert(reasoning_msgs::Assert::Request& req, reasoning_msgs::Assert::Response& res) {
+bool proccessAssert(tue_reasoner_msgs::Assert::Request& req, tue_reasoner_msgs::Assert::Response& res) {
 
     if (req.facts.empty()) {
         ROS_ERROR("Empty received empty query");
@@ -312,20 +312,20 @@ bool proccessAssert(reasoning_msgs::Assert::Request& req, reasoning_msgs::Assert
     }
 
     string action;
-    if (req.action == reasoning_msgs::Assert::Request::ASSERT) {
+    if (req.action == tue_reasoner_msgs::Assert::Request::ASSERT) {
         action = "assert";
-    } else if (req.action == reasoning_msgs::Assert::Request::ASSERTA) {
+    } else if (req.action == tue_reasoner_msgs::Assert::Request::ASSERTA) {
         action = "asserta";
-    } else if (req.action == reasoning_msgs::Assert::Request::ASSERTZ) {
+    } else if (req.action == tue_reasoner_msgs::Assert::Request::ASSERTZ) {
         action = "assertz";
-    } else if (req.action == reasoning_msgs::Assert::Request::RETRACT) {
+    } else if (req.action == tue_reasoner_msgs::Assert::Request::RETRACT) {
         action = "retractall";
     }
 
     stringstream errors;
 
-    for(vector<reasoning_msgs::Term>::const_iterator it = req.facts.begin(); it != req.facts.end(); ++it) {
-        const reasoning_msgs::Term& term_msg = *it;
+    for(vector<tue_reasoner_msgs::Term>::const_iterator it = req.facts.begin(); it != req.facts.end(); ++it) {
+        const tue_reasoner_msgs::Term& term_msg = *it;
 
         PlTermv av(1);
         map<string, PlTerm> str_to_var;
@@ -351,7 +351,7 @@ bool loadDatabase(const string& filename) {
     return PlCall("consult", PlTermv(filename.c_str()));
 }
 
-bool loadDatabase(reasoning_msgs::LoadDatabase::Request& req, reasoning_msgs::LoadDatabase::Response& resp) {
+bool loadDatabase(tue_reasoner_msgs::LoadDatabase::Request& req, tue_reasoner_msgs::LoadDatabase::Response& resp) {
     if (!loadDatabase(req.db_filename)) {
         resp.result = "Failed to load database: " + req.db_filename;
         ROS_ERROR("%s", resp.result.c_str());

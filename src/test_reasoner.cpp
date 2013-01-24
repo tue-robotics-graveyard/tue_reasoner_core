@@ -7,7 +7,7 @@
 
 #include <ros/ros.h>
 
-#include "reasoning_msgs/LoadDatabase.h"
+#include "tue_reasoner_msgs/LoadDatabase.h"
 
 #include "reasoner_interface/interface.h"
 
@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
     /* * * * * * * * * LOAD DATABASE * * * * * * * * */
 
     /*
-    ros::ServiceClient load_db_client = nh_private.serviceClient<reasoning_msgs::LoadDatabase>("/reasoner/load_database");
+    ros::ServiceClient load_db_client = nh_private.serviceClient<tue_reasoner_msgs::LoadDatabase>("/reasoner/load_database");
     load_db_client.waitForExistence();
 
     if (argc <= 1) {
@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    reasoning_msgs::LoadDatabase load_db;
+    tue_reasoner_msgs::LoadDatabase load_db;
     load_db.request.db_filename = argv[1];
     load_db_client.call(load_db);
     */
