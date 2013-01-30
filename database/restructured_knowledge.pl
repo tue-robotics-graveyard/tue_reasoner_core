@@ -114,6 +114,11 @@ object_at_coordinates(wp3, point(1.75, 0.4, 2.25)).
 object_at_coordinates(wp4, point(4, 2, 0)).
 object_at_coordinates(wp5, point(1, 2, 3)).
 
+%% Coordinates used in registration_2013.py (want to set them in locations_hospital_room)
+object_at_coordinates(registration_table,	pose(1.33, -0.3, -1.57)).
+object_at_coordinates(exit,			pose(-1.5, 0, -3.14)).    % is outside hospital room
+object_at_coordinates(front_of_door, 		pose(-1.5, -0.1, 0)).     % is outside hospital room
+
 find_class_coordinates(Class, Object, Coordinates) :-
     class(Object, Class),
     object_at_coordinates(Object, Coordinates).
