@@ -6,8 +6,9 @@
 
     <node pkg="tue_reasoner_core" type="reasoner" args="$(arg args)" respawn="false" name="reasoner" output="screen">
 
-        <param name="database1" value="$(find tue_reasoner_core)/database/std.pl"/>          
-        <param name="database2" value="$(find tue_reasoner_core)/database/restructured_knowledge.pl"/>   
+        <param name="database1" value="$(find tue_reasoner_core)/database/std.pl"/>
+        <param name="database2" value="$(find tue_reasoner_core)/database/locations_hospital_room.pl"/>    
+        <param name="database3" value="$(find tue_reasoner_core)/database/restructured_knowledge.pl"/>   
 
         <!-- World model parameters -->
         <param name="world_model_frame" value="/map"/>
