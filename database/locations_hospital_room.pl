@@ -14,3 +14,8 @@ object_at_coordinates("desk_A",           [1.33,  -0.38, -1.57]).
 object_at_coordinates("outside",          [-0.9,  -0.03,  0]).
 object_at_coordinates("returning_point",  [-0.9,  -0.03,  0]).
 object_at_coordinates("starting_point",   [0.5,   -0.4,   1.57]).
+
+%% Coordinates used in registration_2013.py
+object_at_coordinates(registration_table,	pose(1.33, -0.3, -1.57)).
+object_at_coordinates(exit,			pose(-1.5, 0, -3.14)).    % is outside hospital room
+object_at_coordinates(front_of_door, 		pose(-1.5, -0.1, 0)).     % is outside hospital room

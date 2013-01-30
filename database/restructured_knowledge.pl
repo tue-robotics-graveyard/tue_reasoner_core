@@ -6,8 +6,6 @@
 :- dynamic location/2.
 :- dynamic object_at_coordinates/2.
 
-:- consult(locations_hospital_room). %This must be part of a launch file and dependent on the room Amigo is working in.
-
 class(obj1, coke).
 class(obj2, table).
 class(obj3, armchair).
@@ -100,6 +98,8 @@ is_subclass_of(X, Z) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                  COORDINATES
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Should some of these coordinates not be in locations_hospital_room??
 
 object_at_coordinates(obj1,             pose(9.065, 0.490, 	0)).
 object_at_coordinates(obj2,             pose(7.374, 0.674, 	0)).
