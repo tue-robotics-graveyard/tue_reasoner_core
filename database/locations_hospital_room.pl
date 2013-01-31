@@ -1,3 +1,11 @@
+% multifile: gives possibility to assign predicate values in different files.
+%            Otherwise it would be overwritten by the last imported database 
+%	     if in the same predicate is in that database.
+
+:- multifile object_at_coordinates/2.
+:- dynamic object_at_coordinates/2.
+
+% Does anyone use these types of coordinates:??
 object_at_coordinates("bedside_table",    [3.9,   -1.63,  -1.57]).
 object_at_coordinates("bed_A",            [4.2,   -1.55,  3.14]).
 object_at_coordinates("bed_B",            [4.2,   -0.75,  3.14]).
@@ -15,8 +23,7 @@ object_at_coordinates("outside",          [-0.9,  -0.03,  0]).
 object_at_coordinates("returning_point",  [-0.9,  -0.03,  0]).
 object_at_coordinates("starting_point",   [0.5,   -0.4,   1.57]).
 
-% TODO (Erik: I want to put the coordinates of registration_2013 here. But will not work with current implementation. Need to be in restructured_knowledge for some reason.)
 %% Coordinates used in registration_2013.py
-% object_at_coordinates(registration_table,	pose(1.33, -0.3, -1.57)).
-% object_at_coordinates(exit,			pose(-1.5, 0, -3.14)).    % is outside hospital room
-% object_at_coordinates(front_of_door, 		pose(-1.5, -0.1, 0)).     % is outside hospital room
+object_at_coordinates(registration_table,	pose(1.33, -0.3, -1.57)).
+object_at_coordinates(exit,			pose(-1.5, 0, -3.14)).    % is outside hospital room
+object_at_coordinates(front_of_door, 		pose(-1.5, -0.1, 0)).     % is outside hospital room
