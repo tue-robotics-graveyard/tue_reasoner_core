@@ -20,9 +20,12 @@
 
 #include <problib/conversions.h>
 
-#include <world_model/WorldModelROS.h>
-#include <world_model/storage/SemanticObject.h>
-#include <world_model/core/Property.h>
+#include <wire/ServerROS.h>
+#include <wire/core/Property.h>
+
+#include <wire_msgs/WorldEvidence.h>
+
+#include <tf/transform_listener.h>
 
 #include <vector>
 #include <string>
@@ -33,7 +36,11 @@ using namespace std;
 
 //map<string, vector<Compound*> > facts_;
 
-mhf::WorldModelROS* world_model_;
+wire::ServerROS* wire_server_;
+
+ros::Publisher pub_evidence_;
+
+tf::TransformListener* tf_listener_;
 
 string IDIntToString(int ID) {
     stringstream ss;
@@ -75,92 +82,233 @@ const pbl::Gaussian* getBestGaussian(const pbl::PDF& pdf, double min_weight = 0)
     return 0;
 }
 
-PREDICATE(position_list, 2) {
-    int obj_id = IDStringToInt((char*)A1);
-    PlTail position_list(A2);
-
-    const list<mhf::SemanticObject*> objs = world_model_->getMAPObjects();
-    for(list<mhf::SemanticObject*>::const_iterator it_obj = objs.begin(); it_obj != objs.end(); ++it_obj) {
-        const mhf::SemanticObject& obj = **it_obj;
-        if (obj_id < 0 || obj_id == obj.getID()) {
-            const mhf::Property* pos_prop = obj.getProperty("position");
-            const pbl::Gaussian* pos_gauss = getBestGaussian(pos_prop->getValue());
-            if (pos_gauss) {
-                const pbl::Vector& mean = pos_gauss->getMean();
-                PlTermv xyz(3);
-                xyz[0] = mean(0);
-                xyz[1] = mean(1);
-                xyz[2] = mean(2);
-
-                PlTermv binding(2);
-                binding[0] = IDIntToString(obj.getID()).c_str();
-                binding[1] = PlCompound("point", xyz);
-
-                position_list.append(PlCompound("binding", binding));
-            }
+PlTerm PDFToProlog(const pbl::PDF& pdf) {
+    if (pdf.type() == pbl::PDF::DISCRETE) {
+        const pbl::PMF* pmf = pbl::PDFtoPMF(pdf);
+        if (pmf) {
+            string expected_val;
+            pmf->getExpectedValue(expected_val);
+            return PlTerm(expected_val.c_str());
         }
-    }
+    } else if (pdf.type() == pbl::PDF::GAUSSIAN) {
+        const pbl::Gaussian* gauss = pbl::PDFtoGaussian(pdf);
 
-    position_list.close();
-    return TRUE;
-}
+        if (gauss) {
+            const pbl::Vector& mean = gauss->getMean();
+            PlTerm vec;
+            PlTail vec_list(vec);
+            for(unsigned int i = 0; i < mean.n_rows; ++i) {
+                vec_list.append(PlTerm(mean(i)));
+            }
+            vec_list.close();
 
-PREDICATE(type_list, 2) {
-    int obj_id = IDStringToInt((char*)A1);
-    PlTail type_list(A2);
-
-    const list<mhf::SemanticObject*> objs = world_model_->getMAPObjects();
-    for(list<mhf::SemanticObject*>::const_iterator it_obj = objs.begin(); it_obj != objs.end(); ++it_obj) {
-        const mhf::SemanticObject& obj = **it_obj;
-        if (obj_id < 0 || obj_id == obj.getID()) {
-            const mhf::Property* class_prop = obj.getProperty("class_label");
-            if (class_prop) {
-                const pbl::PMF* class_pmf = pbl::PDFtoPMF(class_prop->getValue());
-                if (class_pmf) {
-                    string class_label;
-                    class_pmf->getExpectedValue(class_label);
-
-                    PlTermv binding(2);
-                    binding[0] = IDIntToString(obj.getID()).c_str();
-                    binding[1] = class_label.c_str();
-
-                    type_list.append(PlCompound("binding", binding));
+            const pbl::Matrix& cov = gauss->getCovariance();
+            PlTerm symmat;
+            PlTail symmat_list(symmat);
+            for(unsigned int i = 0; i < cov.n_rows; ++i) {
+                for(unsigned int j = i; j < cov.n_cols; ++j) {
+                   symmat_list.append(PlTerm(cov(i, j)));
                 }
             }
+            symmat_list.close();
+
+            PlTermv gauss_args(2);
+            gauss_args[0] = PlCompound("vector", vec);
+            gauss_args[1] = PlCompound("symmetric_matrix", symmat);
+            return PlCompound("gaussian", gauss_args);
+        }
+    } else if (pdf.type() == pbl::PDF::MIXTURE) {
+        const pbl::Mixture* mix = pbl::PDFtoMixture(pdf);
+
+        if (mix) {
+            PlTermv options(1);
+            PlTail options_list(options[0]);
+
+            for(int i = 0; i < mix->components(); ++i) {
+                PlTermv prob(2);
+                prob[0] = PlTerm(mix->getWeight(i));
+                prob[1] = PDFToProlog(mix->getComponent(i));
+
+                options_list.append(PlCompound("p", prob));
+            }
+
+            options_list.close();
+
+            return PlCompound("discrete_pdf", options);
         }
     }
 
-    type_list.close();
-    return TRUE;
+    return PlTerm("UNKNOWN_PDF");
 }
 
-PREDICATE(object_property_list, 3) {
+pbl::Vector prologToVector(const PlTerm& term) {
+    if ((string)term.name() != "vector" || term.arity() != 1) {
+        // throw error
+    }
+
+    vector<double> temp;
+    PlTail vec_list(term[1]);
+    PlTerm vec_e;
+    while(vec_list.next(vec_e)) {
+        temp.push_back((double)vec_e);
+    }
+
+    pbl::Vector vec(temp.size());
+    for(unsigned int i = 0; i < temp.size(); ++i) {
+        vec(i) = temp[i];
+    }
+    return vec;
+}
+
+pbl::Matrix prologToSymmetricMatrix(const PlTerm& term) {
+    if ((string)term.name() != "symmetric_matrix" || term.arity() != 1) {
+        // throw error
+    }
+
+    vector<double> temp;
+    PlTail mat_list(term[1]);
+    PlTerm mat_e;
+    while(mat_list.next(mat_e)) {
+        temp.push_back((double)mat_e);
+    }
+
+    unsigned int dim = (unsigned int)sqrt(temp.size() * 2);
+
+    int k = 0;
+    pbl::Matrix mat(dim, dim);
+    for(unsigned int i = 0; i < dim; ++i) {
+        for(unsigned int j = i; j < dim; ++j) {
+            mat(i, j) = temp[k];
+            mat(j, i) = temp[k];
+            ++k;
+        }
+    }
+    return mat;
+}
+
+pbl::PDF* prologToPDF(const PlTerm& term) {
+    string functor = (string)term.name();
+
+    if (functor == "gaussian") {
+        if (term.arity() != 2) {
+            return 0;
+        }
+
+        PlTerm vec_term = term[1];
+        PlTerm mat_term = term[2];
+        if ((string)vec_term.name() != "vector" || vec_term.arity() != 1
+                || (string)mat_term.name() != "symmetric_matrix" || mat_term.arity() != 1) {
+            return 0;
+        }
+
+        return new pbl::Gaussian(prologToVector(vec_term), prologToSymmetricMatrix(mat_term));
+    }
+
+    pbl::PMF* pmf = new pbl::PMF();
+    pmf->setProbability(functor, 1.0);
+    return pmf;
+}
+
+PREDICATE(property_list, 3) {
     int obj_id = IDStringToInt((char*)A1);
     string property = (char*)A2;
     PlTail property_list(A3);
 
-    const list<mhf::SemanticObject*> objs = world_model_->getMAPObjects();
-    for(list<mhf::SemanticObject*>::const_iterator it_obj = objs.begin(); it_obj != objs.end(); ++it_obj) {
-        const mhf::SemanticObject& obj = **it_obj;
+    const list<wire::Object*>& objs = wire_server_->getMAPObjects(ros::Time::now());
+
+    for(list<wire::Object*>::const_iterator it_obj = objs.begin(); it_obj != objs.end(); ++it_obj) {
+        const wire::Object& obj = **it_obj;
         if (obj_id < 0 || obj_id == obj.getID()) {
-            const mhf::Property* class_prop = obj.getProperty(property);
-            if (class_prop) {
-                const pbl::PMF* class_pmf = pbl::PDFtoPMF(class_prop->getValue());
-                if (class_pmf) {
-                    string class_label;
-                    class_pmf->getExpectedValue(class_label);
+            const wire::Property* prop = obj.getProperty(property);
 
-                    PlTermv binding(2);
-                    binding[0] = IDIntToString(obj.getID()).c_str();
-                    binding[1] = class_label.c_str();
+            PlTermv binding(2);
+            binding[0] = IDIntToString(obj.getID()).c_str();
+            binding[1] = PDFToProlog(prop->getValue());
 
-                    property_list.append(PlCompound("binding", binding));
-                }
-            }
+            property_list.append(PlCompound("binding", binding));
         }
     }
 
     property_list.close();
+    return TRUE;
+}
+
+PREDICATE(add_evidence, 1) {
+    PlTail tail(A1);
+    PlTerm e;
+
+    map<string, wire_msgs::ObjectEvidence> id_to_evidence;
+
+    while(tail.next(e)) {
+        string functor = (string)e.name();
+        if (functor != "property" || e.arity() != 3) {
+            return FALSE;
+        }
+
+        string id = (string)e[1];
+        string attribute = (string)e[2];
+        pbl::PDF* pdf = prologToPDF(e[3]);
+
+        if (!pdf) {
+            return FALSE;
+        }
+
+        wire_msgs::Property prop;
+        prop.attribute = attribute;
+        prop.pdf = pbl::PDFtoMsg(*pdf);
+        delete pdf;
+
+        map<string, wire_msgs::ObjectEvidence>::iterator it_id = id_to_evidence.find(id);
+        if (it_id == id_to_evidence.end()) {
+            wire_msgs::ObjectEvidence ev_obj;
+            ev_obj.certainty = 1.0;
+            ev_obj.properties.push_back(prop);
+            id_to_evidence[id] = ev_obj;
+        } else {
+            it_id->second.properties.push_back(prop);
+        }
+    }
+
+    wire_msgs::WorldEvidence ev_world;
+    ev_world.header.frame_id = "/map";
+    ev_world.header.stamp = ros::Time::now();
+
+    for(map<string, wire_msgs::ObjectEvidence>::iterator it_id = id_to_evidence.begin(); it_id != id_to_evidence.end(); ++it_id) {
+        ev_world.object_evidence.push_back(it_id->second);
+    }
+
+    pub_evidence_.publish(ev_world);
+
+    return TRUE;
+}
+
+PREDICATE(lookup_transform, 3) {
+    tf::StampedTransform transform;
+
+    try {
+        tf_listener_->lookupTransform((string)A1, (string)A2, ros::Time(), transform);
+    } catch (tf::TransformException& ex) {
+        ROS_ERROR("%s",ex.what());
+        return FALSE;
+    }
+
+    PlTermv vec_args(3);
+    vec_args[0] = transform.getOrigin().getX();
+    vec_args[1] = transform.getOrigin().getY();
+    vec_args[2] = transform.getOrigin().getZ();
+
+    PlTermv quat_args(4);
+    quat_args[0] = transform.getRotation().getX();
+    quat_args[1] = transform.getRotation().getY();
+    quat_args[2] = transform.getRotation().getZ();
+    quat_args[3] = transform.getRotation().getW();
+
+    PlTermv tf_args(2);
+    tf_args[0] = PlCompound("vector", vec_args);
+    tf_args[1] = PlCompound("quaternion", quat_args);
+
+    A3 = PlCompound("transform", tf_args);
+
     return TRUE;
 }
 
@@ -365,6 +513,8 @@ int main(int argc, char **argv) {
 	ros::init(argc, argv, "reasoner");
     ros::NodeHandle nh_private("~");
 
+    tf_listener_ = new tf::TransformListener();
+
 	// Initialize Prolog Engine
     putenv("SWI_HOME_DIR=/usr/lib/swi-prolog");
 	//PlEngine prolog_engine(argv[0]);
@@ -393,17 +543,18 @@ int main(int argc, char **argv) {
     }
 
     // create world model
-    world_model_ = new mhf::WorldModelROS();
-    world_model_->registerEvidenceTopic("/world_evidence");
-    world_model_->startThreaded();
+    wire_server_ = new wire::ServerROS();
+    wire_server_->registerEvidenceTopic("/world_evidence");
+
+    pub_evidence_ = nh_private.advertise<wire_msgs::WorldEvidence>("/world_evidence", 10);
 
     ros::ServiceServer query_service = nh_private.advertiseService("query", proccessQuery);
     ros::ServiceServer assert_service = nh_private.advertiseService("assert", proccessAssert);
     ros::ServiceServer load_db_service = nh_private.advertiseService("load_database", loadDatabase);
 
-    ros::spin();
+    wire_server_->start();
 
-    delete world_model_;
+    delete wire_server_;
 
 	return 0;
 }

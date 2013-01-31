@@ -1,29 +1,34 @@
 <knowledge>
 
-    <prior_new value="1" />
-    <prior_existing value="1" />
-    <prior_clutter value="5" />
+    <prior_new value="0.4" />
+    <prior_existing value="0.4" />
+    <prior_clutter value="0.1" />
 
     <object_class name="object"> 
     
-        <behavior_model attribute="position" model="state_estimators/PositionEstimator">
+        <behavior_model attribute="position" model="wire_state_estimators/PositionEstimator">
             <pnew type="uniform" dimensions="3" density="0.0001" />            
             <pclutter type="uniform" dimensions="3" density="0.0001" />
 
             <param name="max_acceleration" value="0" />                
         </behavior_model>
 
-        <behavior_model attribute="color" model="state_estimators/DiscreteEstimator">
+        <behavior_model attribute="color" model="wire_state_estimators/DiscreteEstimator">
             <pnew type="discrete" domain_size="100" />            
             <pclutter type="discrete" domain_size="100" />
         </behavior_model> 
 
-        <behavior_model attribute="class_label" model="state_estimators/DiscreteEstimator">
+        <behavior_model attribute="class_label" model="wire_state_estimators/DiscreteEstimator">
             <pnew type="discrete" domain_size="100" />            
             <pclutter type="discrete" domain_size="100" />
         </behavior_model>
 
-        <behavior_model attribute="shape" model="state_estimators/DiscreteEstimator">
+        <behavior_model attribute="knowrob_id" model="wire_state_estimators/DiscreteEstimator">
+            <pnew type="discrete" domain_size="100" />            
+            <pclutter type="discrete" domain_size="100" />
+        </behavior_model>
+
+        <behavior_model attribute="shape" model="wire_state_estimators/DiscreteEstimator">
             <pnew type="discrete" domain_size="10" />            
             <pclutter type="discrete" domain_size="10" />
         </behavior_model>
@@ -33,7 +38,7 @@
     
     <object_class name="blob" base="object">
     
-        <behavior_model attribute="position" model="state_estimators/PositionEstimator">
+        <behavior_model attribute="position" model="wire_state_estimators/PositionEstimator">
             <pnew type="uniform" dimensions="3" density="0.0001" />            
             <pclutter type="uniform" dimensions="3" density="0.0001" />
 
@@ -41,17 +46,17 @@
             <!--param name="velocity_factor" value="0.1" / --> 
         </behavior_model>     
 
-        <behavior_model attribute="color" model="state_estimators/DiscreteEstimator">
+        <behavior_model attribute="color" model="wire_state_estimators/DiscreteEstimator">
             <pnew type="discrete" domain_size="100" />            
             <pclutter type="discrete" domain_size="100" />
         </behavior_model>       
    
-        <behavior_model attribute="shape" model="state_estimators/DiscreteEstimator">
+        <behavior_model attribute="shape" model="wire_state_estimators/DiscreteEstimator">
             <pnew type="discrete" domain_size="100" />            
             <pclutter type="discrete" domain_size="100" />
         </behavior_model>   
         
-        <behavior_model attribute="size" model="state_estimators/DiscreteEstimator">
+        <behavior_model attribute="size" model="wire_state_estimators/DiscreteEstimator">
             <pnew type="discrete" domain_size="100" />            
             <pclutter type="discrete" domain_size="100" />
         </behavior_model>             

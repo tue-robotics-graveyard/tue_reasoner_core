@@ -39,4 +39,4 @@ exploration_target(Room, Target) :-
     environment(Env),
     exploration_target(Env, Challenge, Room, Target).
 
-type(coke, drink).
+%type(coke, drink).
