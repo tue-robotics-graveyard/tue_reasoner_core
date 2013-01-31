@@ -21,14 +21,14 @@ property(ID, Prop, Value) :-
 
 % position
 
-property(amigo, position, vector(X, Y, Z)) :-
+property(amigo, position, gaussian(vector(X, Y, Z), symmetric_matrix([0,0,0,0,0,0]))) :-
     lookup_transform('/map', '/base', transform(vector(X, Y, Z), _)).
 
-property(ID1, position, ID2) :-
-	property(ID2, area, area_2d(Xmin, Xmax, Ymin, Ymax)),
-	property(ID1, position, vector(X, Y, _)),	
-    ID1 \= ID2,
-	X > Xmin, X < Xmax, Y > Ymin, Y < Ymax.
+%property(ID1, position, ID2) :-
+%	property(ID2, area, area_2d(Xmin, Xmax, Ymin, Ymax)),
+%	property(ID1, position, vector(X, Y, _)),	
+%    ID1 \= ID2,
+%	X > Xmin, X < Xmax, Y > Ymin, Y < Ymax.
 
 % near
 
