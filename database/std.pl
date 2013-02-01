@@ -12,8 +12,8 @@ object_property(ID, PROPERTY, VALUE) :-
 type(ID, CLASS) :-
     property(ID, class_label, CLASS).
 
-position(ID, POS) :-
-    property(ID, position, POS).
+position(ID, point(X, Y, Z)) :-
+    property(ID, position, gaussian(vector([X, Y, Z]), _)).
 
 property(ID, Prop, Value) :-
     property_list(ID, Prop, ValueList),
