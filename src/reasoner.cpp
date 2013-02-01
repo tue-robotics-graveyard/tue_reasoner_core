@@ -107,7 +107,7 @@ PlTerm PDFToProlog(const pbl::PDF& pdf) {
             PlTail symmat_list(symmat);
             for(unsigned int i = 0; i < cov.n_rows; ++i) {
                 for(unsigned int j = i; j < cov.n_cols; ++j) {
-                   symmat_list.append(PlTerm(cov(i, j)));
+                    symmat_list.append(PlTerm(cov(i, j)));
                 }
             }
             symmat_list.close();
@@ -218,14 +218,16 @@ PREDICATE(property_list, 3) {
 
     for(list<wire::Object*>::const_iterator it_obj = objs.begin(); it_obj != objs.end(); ++it_obj) {
         const wire::Object& obj = **it_obj;
+
         if (obj_id < 0 || obj_id == obj.getID()) {
             const wire::Property* prop = obj.getProperty(property);
 
-            PlTermv binding(2);
-            binding[0] = IDIntToString(obj.getID()).c_str();
-            binding[1] = PDFToProlog(prop->getValue());
-
-            property_list.append(PlCompound("binding", binding));
+            if (prop) {
+                PlTermv binding(2);
+                binding[0] = IDIntToString(obj.getID()).c_str();
+                binding[1] = PDFToProlog(prop->getValue());
+                property_list.append(PlCompound("binding", binding));
+            }
         }
     }
 
@@ -369,25 +371,25 @@ void prologTermToMsg(const PlTerm& term, const map<string, PlTerm>& str_to_var, 
     }
 
     try {
-    if (term.arity() == 0) {
-        // constant (either a number or string)
-        msg.type = tue_reasoner_msgs::TermImpl::CONSTANT;
+        if (term.arity() == 0) {
+            // constant (either a number or string)
+            msg.type = tue_reasoner_msgs::TermImpl::CONSTANT;
 
-        msg.constant.str = (char*)term;
-        msg.constant.type = tue_reasoner_msgs::Constant::STRING;
-    } else {
-        // compound
-        msg.type = tue_reasoner_msgs::TermImpl::COMPOUND;
+            msg.constant.str = (char*)term;
+            msg.constant.type = tue_reasoner_msgs::Constant::STRING;
+        } else {
+            // compound
+            msg.type = tue_reasoner_msgs::TermImpl::COMPOUND;
 
-        msg.functor = term.name();
+            msg.functor = term.name();
 
-        for(int i = 0; i < term.arity(); ++i) {
-            tue_reasoner_msgs::TermImpl sub_term;
-            prologTermToMsg(term[i+1], str_to_var, sub_term, full_term_msg);
-            msg.sub_term_ptrs.push_back(full_term_msg.sub_terms.size());
-            full_term_msg.sub_terms.push_back(sub_term);
+            for(int i = 0; i < term.arity(); ++i) {
+                tue_reasoner_msgs::TermImpl sub_term;
+                prologTermToMsg(term[i+1], str_to_var, sub_term, full_term_msg);
+                msg.sub_term_ptrs.push_back(full_term_msg.sub_terms.size());
+                full_term_msg.sub_terms.push_back(sub_term);
+            }
         }
-    }
     } catch (const PlTypeError& e) {
         msg.type = tue_reasoner_msgs::TermImpl::VARIABLE;
         msg.variable = (char*)term;
@@ -398,19 +400,19 @@ void prologTermToMsg(const PlTerm& term, const map<string, PlTerm>& str_to_var, 
 tue_reasoner_msgs::BindingSet prologToBindingSetMsg(const map<string, PlTerm>& str_to_var) {
     tue_reasoner_msgs::BindingSet binding_set;
 
-	for(map<string, PlTerm>::const_iterator it = str_to_var.begin(); it != str_to_var.end(); ++it) {
+    for(map<string, PlTerm>::const_iterator it = str_to_var.begin(); it != str_to_var.end(); ++it) {
 
         tue_reasoner_msgs::Binding binding;
         binding.variable = it->first;
 
-		const PlTerm& term = it->second;
+        const PlTerm& term = it->second;
 
         prologTermToMsg(term, str_to_var, binding.value.root, binding.value);
 
         binding_set.bindings.push_back(binding);
-	}
+    }
 
-	return binding_set;
+    return binding_set;
 }
 
 bool proccessQuery(tue_reasoner_msgs::Query::Request& req, tue_reasoner_msgs::Query::Response& res) {
@@ -423,13 +425,13 @@ bool proccessQuery(tue_reasoner_msgs::Query::Request& req, tue_reasoner_msgs::Qu
     map<string, PlTerm> str_to_var;
     av[0] = MsgToPrologTerm(req.term.root, req.term, str_to_var);
 
-    stringstream print_out;    
+    stringstream print_out;
     print_out << "?- ";
     print_out << (char*)av[0];
 
     ROS_INFO("%s", print_out.str().c_str());
 
-    try {        
+    try {
         PlQuery q("call", av);
         while( q.next_solution() ) {
             res.binding_sets.push_back(prologToBindingSetMsg(str_to_var));
@@ -449,7 +451,7 @@ bool proccessQuery(tue_reasoner_msgs::Query::Request& req, tue_reasoner_msgs::Qu
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t_end);
     ROS_INFO("       Reasoner: query took  %f seconds.", (t_end.tv_sec - t_start.tv_sec) + double(t_end.tv_nsec - t_start.tv_nsec) / 1e9);
 
-	return true;
+    return true;
 }
 
 bool proccessAssert(tue_reasoner_msgs::Assert::Request& req, tue_reasoner_msgs::Assert::Response& res) {
@@ -509,15 +511,15 @@ bool loadDatabase(tue_reasoner_msgs::LoadDatabase::Request& req, tue_reasoner_ms
 
 int main(int argc, char **argv) {
 
-	// Initialize node
-	ros::init(argc, argv, "reasoner");
+    // Initialize node
+    ros::init(argc, argv, "reasoner");
     ros::NodeHandle nh_private("~");
 
     tf_listener_ = new tf::TransformListener();
 
-	// Initialize Prolog Engine
+    // Initialize Prolog Engine
     putenv("SWI_HOME_DIR=/usr/lib/swi-prolog");
-	//PlEngine prolog_engine(argv[0]);
+    //PlEngine prolog_engine(argv[0]);
 
     PlEngine prolog_engine(argc, argv);
 
@@ -556,5 +558,5 @@ int main(int argc, char **argv) {
 
     delete wire_server_;
 
-	return 0;
+    return 0;
 }
