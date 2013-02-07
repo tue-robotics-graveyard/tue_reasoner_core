@@ -113,7 +113,7 @@ object_at_coordinates(entrance,         pose(1, 0, 0)).
 object_at_coordinates(chili,            pose(1.5, 0, 0)).
 
 % test goal
-%goal(get,entrance,entrance,coke).
+goal(get,entrance,entrance,coke).
 
 
 object_at_coordinates(obj1,             pose(9.065, 0.490, 	0)).
