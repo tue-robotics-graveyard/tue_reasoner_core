@@ -10,8 +10,7 @@
   <url>http://ros.org/wiki/tue_reasoner</url>
   
   <depend package="roscpp"/> 
-  <depend package="tue_reasoner_msgs"/>
-  <depend package="tue_reasoner_interface"/>
+  <depend package="psi"/>
   <depend package="wire_core"/>
 
   <!--rosdep name="swi-prolog" / -->

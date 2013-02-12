@@ -39,4 +39,4 @@ property(ID1, near, ID2) :-
     abs(X1-X2, XDiff),
     abs(Y1-Y2, YDiff),
     XDiff < 1,
-    YDiff < 1.   
+    YDiff < 1.

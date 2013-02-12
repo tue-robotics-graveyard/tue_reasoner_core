@@ -48,15 +48,9 @@ include_directories(${PROJECT_SOURCE_DIR}/3rdparty)
 file(GLOB_RECURSE HEADER_FILES include/*.h)
 file(GLOB_RECURSE HEADER_FILES_3RD 3rdparty/*.h)
 
-rosbuild_add_executable(reasoner src/Value.cpp
-								 src/Term.cpp
-								 src/Variable.cpp
-								 src/Compound.cpp
-								 src/BindingSet.cpp
-								 src/Parser.cpp
-                                                                 src/reasoner.cpp
-                                                                 ${HEADER_FILES}
-                                                                 ${HEADER_FILES_3RD}
+rosbuild_add_executable(reasoner src/Reasoner.cpp
+                                 ${HEADER_FILES}
+                                 ${HEADER_FILES_3RD}
 )
 
 target_link_libraries(reasoner ${SWIPL_LIB})

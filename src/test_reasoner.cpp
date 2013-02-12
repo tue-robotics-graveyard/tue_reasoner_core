@@ -1,18 +1,13 @@
-/*
- * test_reasoner.cpp
- *
- *  Created on: Jun 7, 2012
- *      Author: sdries
- */
-
 #include <ros/ros.h>
 
-#include "tue_reasoner_msgs/LoadDatabase.h"
-
-#include "reasoner_interface/interface.h"
+#include <psi/Client.h>
+#include <psi/Variable.h>
+#include <psi/Compound.h>
+#include <psi/Constant.h>
 
 using namespace std;
 
+using namespace psi;
 
 int main(int argc, char **argv) {
 
@@ -38,11 +33,26 @@ int main(int argc, char **argv) {
 
     /* * * * * * * * * TEST * * * * * * * * */
 
-    interface::query(Compound(",",
-                              Compound("position", Variable("X"), Variable("P")),
-                              Compound("type", Variable("X"), Variable("Y"))
-                             )
-                     );
+    psi::Client client("/reasoner/query", "/reasoner/assert");
+
+    /*
+    vector<BindingSet> result =
+            client.query(Compound(",",
+                          Compound("position", Variable("X"), Variable("P")),
+                          Compound("type", Variable("X"), Variable("Y"))
+                         )
+                 );
+    */
+
+    vector<BindingSet> result = client.query(Compound("mirror", Constant("a"), Variable("X")));
+
+    if (result.empty()) {
+        cout << "No." << endl;
+    } else {
+        for(unsigned int i = 0; i < result.size(); ++i) {
+            cout << result[i].toString() << endl;
+        }
+    }
 
     /*
 
