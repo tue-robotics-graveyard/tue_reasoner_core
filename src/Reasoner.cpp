@@ -302,16 +302,21 @@ bool Reasoner::pred_add_evidence(PlTerm a1) {
 
         string id = (string)e[1];
         string attribute = (string)e[2];
-        pbl::PDF* pdf = pbl::toPDF(prologToPsi(e[3]));
+        psi::Term pdf_psi = prologToPsi(e[3]);
 
-        if (!pdf) {
-            return false;
-        }
+        pbl::PDF* pdf = pbl::toPDF(pdf_psi);
 
         wire_msgs::Property prop;
         prop.attribute = attribute;
-        prop.pdf = pbl::PDFtoMsg(*pdf);
-        delete pdf;
+
+        if (pdf) {
+            prop.pdf = pbl::PDFtoMsg(*pdf);
+            delete pdf;
+        } else {
+            pbl::PMF pmf;
+            pmf.setExact(pdf_psi.toString());
+            prop.pdf = pbl::PDFtoMsg(pmf);
+        }
 
         map<string, wire_msgs::ObjectEvidence>::iterator it_id = id_to_evidence.find(id);
         if (it_id == id_to_evidence.end()) {
