@@ -28,6 +28,11 @@
             <pclutter type="discrete" domain_size="100" />
         </behavior_model>
 
+        <behavior_model attribute="id" model="wire_state_estimators/DiscreteEstimator">
+            <pnew type="discrete" domain_size="100" />            
+            <pclutter type="discrete" domain_size="100" />
+        </behavior_model>
+
         <behavior_model attribute="shape" model="wire_state_estimators/DiscreteEstimator">
             <pnew type="discrete" domain_size="10" />            
             <pclutter type="discrete" domain_size="10" />

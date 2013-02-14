@@ -187,10 +187,10 @@ PlTerm Reasoner::psiToProlog(const psi::Term& term, map<string, PlTerm>& str_to_
         return pl_list;
     } else if (term.isCompound()) {
         // term is a compound
-        PlTermv args(term.getArity());
+        PlTermv args(term.getSize());
 
-        for(unsigned int i = 0; i < term.getArity(); ++i) {
-            args[i] = psiToProlog(term.getArgument(i), str_to_var);
+        for(unsigned int i = 0; i < term.getSize(); ++i) {
+            args[i] = psiToProlog(term.get(i), str_to_var);
         }
 
         return PlCompound(term.getFunctor().c_str(), args);
@@ -294,17 +294,28 @@ bool Reasoner::pred_add_evidence(PlTerm a1) {
 
     map<string, wire_msgs::ObjectEvidence> id_to_evidence;
 
+    string frame_id = "";
+
     while(tail.next(e)) {
         string functor = (string)e.name();
         if (functor != "property" || e.arity() != 3) {
             return false;
         }
 
-        string id = (string)e[1];
-        string attribute = (string)e[2];
-        psi::Term pdf_psi = prologToPsi(e[3]);
+        psi::Term id_psi = prologToPsi(e[1]);
+        string id = id_psi.toString();
 
-        pbl::PDF* pdf = pbl::toPDF(pdf_psi);
+        string attribute = (string)e[2];
+        psi::Term value = prologToPsi(e[3]);
+
+        pbl::PDF* pdf = 0;
+        if (attribute == "position") {
+            // Value = cartesian_coordinate(PDF, [FrameID])
+            frame_id = value.get(1).get(0).toString();
+            pdf = pbl::toPDF(value.get(0));
+        } else {
+            pdf = pbl::toPDF(value);
+        }
 
         wire_msgs::Property prop;
         prop.attribute = attribute;
@@ -314,7 +325,7 @@ bool Reasoner::pred_add_evidence(PlTerm a1) {
             delete pdf;
         } else {
             pbl::PMF pmf;
-            pmf.setExact(pdf_psi.toString());
+            pmf.setExact(value.toString());
             prop.pdf = pbl::PDFtoMsg(pmf);
         }
 
@@ -322,15 +333,31 @@ bool Reasoner::pred_add_evidence(PlTerm a1) {
         if (it_id == id_to_evidence.end()) {
             wire_msgs::ObjectEvidence ev_obj;
             ev_obj.certainty = 1.0;
-            ev_obj.properties.push_back(prop);
+            ev_obj.properties.push_back(prop);            
+
+            if (!id_psi.isVariable()) {
+                wire_msgs::Property id_prop;
+                id_prop.attribute = "id";
+
+                pbl::PMF id_pmf;
+                id_pmf.setExact(id);
+                id_prop.pdf = pbl::PDFtoMsg(id_pmf);
+                ev_obj.properties.push_back(id_prop);
+            }
+
             id_to_evidence[id] = ev_obj;
         } else {
             it_id->second.properties.push_back(prop);
         }
     }
 
+    if (frame_id == "") {
+        ROS_ERROR("Position frame not specified!");
+        return false;
+    }
+
     wire_msgs::WorldEvidence ev_world;
-    ev_world.header.frame_id = "/map";
+    ev_world.header.frame_id = frame_id;
     ev_world.header.stamp = ros::Time::now();
 
     for(map<string, wire_msgs::ObjectEvidence>::iterator it_id = id_to_evidence.begin(); it_id != id_to_evidence.end(); ++it_id) {
