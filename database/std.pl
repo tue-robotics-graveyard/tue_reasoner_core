@@ -10,7 +10,7 @@ object_property(ID, PROPERTY, VALUE) :-
     property(ID, PROPERTY, VALUE).
 
 type(ID, CLASS) :-
-    property(ID, class_label, CLASS).
+    property_expected(ID, class_label, CLASS).
 
 position(ID, point(X, Y, Z)) :-
     property(ID, position, gaussian(vector([X, Y, Z]), _)).
@@ -40,3 +40,26 @@ property(ID1, near, ID2) :-
     abs(Y1-Y2, YDiff),
     XDiff < 1,
     YDiff < 1.
+
+% Returns expected value for property
+property_expected(X, Prop, Val) :-
+    property(X, Prop, PDF),
+    get_expected(PDF, Val).
+
+% Returns expected value of a PDF
+get_expected(gaussian(vector(Val), _), Val).
+get_expected(discrete(Domain, Values), Val) :-
+    get_expected(discrete(Domain, Values), Val, _).
+
+get_expected(discrete(_, [p(Prob, Val)]),      Val, Prob).
+get_expected(discrete(_, [p(Prob, Val)|Rest]), MaxVal, MaxProb) :-
+    get_expected(discrete(_, Rest), Val2, Prob2),
+    (
+      Val > Val2
+      ->
+        MaxVal = Val,
+        MaxProb = Prob
+      ;
+        MaxVal = Val2,
+        MaxProb = Prob
+    ).
