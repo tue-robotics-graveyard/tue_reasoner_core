@@ -41,3 +41,5 @@ exploration_target(Room, Target) :-
     exploration_target(Env, Challenge, Room, Target).
 
 %type(coke, drink).
+
+%position(object1, point(1,2,3)).
