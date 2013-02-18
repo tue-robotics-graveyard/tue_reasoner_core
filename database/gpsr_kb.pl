@@ -107,10 +107,10 @@ is_subclass_of(X, Z) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % coordinates used for testing gpsr_erik.py
-object_at_coordinates(meeting_point, 	pose(1.293, -0.445, 0.914)).
-object_at_coordinates(coke,             pose(2, 0, 0)).
-object_at_coordinates(entrance,         pose(1, 0, 0)).
-object_at_coordinates(chili,            pose(1.5, 0, 0)).
+object_at_coordinates(meeting_point, 	pose_2d(1.293, -0.445, 0.914)).
+object_at_coordinates(coke,             pose_2d(2, 0, 0)).
+object_at_coordinates(entrance,         pose_2d(1, 0, 0)).
+object_at_coordinates(chili,            pose_2d(1.5, 0, 0)).
 
 % test goal
 goal(get,entrance,entrance,coke).
