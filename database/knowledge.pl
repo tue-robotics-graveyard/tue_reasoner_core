@@ -24,7 +24,7 @@ base_pose(bed_cabinet_1,     pose_2d(3.797, -1.240, -1.608)).
 region_of_interest(cabinet_expedit_1, point_3d(4.807,  2.102, 1.000)).
 region_of_interest(bed_1,             point_3d(5.009, -1.706, 1.000)).
 region_of_interest(bed_cabinet_1,     point_3d(3.729, -2.286, 1.000)).
-region_of_interest(trashbin,     	  point_3d(5.6,    1.9,   1.1)).
+region_of_interest(trashbin1,     	  point_3d(5.55,    1.90,   1.1)).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                  HELPER RULES
@@ -40,6 +40,9 @@ exploration_target(Room, Target) :-
     environment(Env),
     exploration_target(Env, Challenge, Room, Target).
 
-%type(coke, drink).
+%type(obj0, drink).
+disposal_type(coke, trashbin).
 
 %position(object1, point(1,2,3)).
+
+type(trashbin1, trashbin).
