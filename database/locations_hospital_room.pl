@@ -27,3 +27,4 @@ object_at_coordinates("starting_point",   [0.5,   -0.4,   1.57]).
 object_at_coordinates(registration_table,	pose_2d(1.33, -0.3, -1.57)).
 object_at_coordinates(exit,			pose_2d(-1.5, 0, -3.14)).    % is outside hospital room
 object_at_coordinates(front_of_door, 		pose_2d(-1.5, -0.1, 0)).     % is outside hospital room
+object_at_coordinates(meeting_point, 		pose_2d(1.293, -0.445, 0.914)).
