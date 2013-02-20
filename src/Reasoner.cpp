@@ -244,21 +244,9 @@ psi::Term Reasoner::prologToPsi(const PlTerm& pl_term) const {
     }
 }
 
-string Reasoner::IDIntToString(int ID) {
-    stringstream ss;
-    ss << "id-" << ID;
-    return ss.str();
-}
-
-int Reasoner::IDStringToInt(const string& ID) {
-    if(ID.substr(0, 3) == "id-") {
-        return atoi(ID.substr(3).c_str());
-    }
-    return -1;
-}
-
 bool Reasoner::pred_property_list(PlTerm a1, PlTerm a2, PlTerm a3) {
-    int obj_id = IDStringToInt((char*)a1);
+
+    psi::Term obj_id_psi = prologToPsi(a1);
     string property = (char*)a2;
     PlTail property_list(a3);
 
@@ -267,12 +255,12 @@ bool Reasoner::pred_property_list(PlTerm a1, PlTerm a2, PlTerm a3) {
     for(list<wire::Object*>::const_iterator it_obj = objs.begin(); it_obj != objs.end(); ++it_obj) {
         const wire::Object& obj = **it_obj;
 
-        if (obj_id < 0 || obj_id == obj.getID()) {
+        if (obj_id_psi.isVariable() || obj_id_psi.toString() == obj.getID()) {
             const wire::Property* prop = obj.getProperty(property);
 
             if (prop) {
                 PlTermv binding(2);
-                binding[0] = IDIntToString(obj.getID()).c_str();
+                binding[0] = obj.getID().c_str();
                 binding[1] = psiToProlog(pbl::toPSI(prop->getValue()));
                 property_list.append(PlCompound("binding", binding));
             }
@@ -333,7 +321,8 @@ bool Reasoner::pred_add_evidence(PlTerm a1) {
         if (it_id == id_to_evidence.end()) {
             wire_msgs::ObjectEvidence ev_obj;
             ev_obj.certainty = 1.0;
-            ev_obj.properties.push_back(prop);            
+            ev_obj.properties.push_back(prop);
+            ev_obj.ID = id;
 
             if (!id_psi.isVariable()) {
                 wire_msgs::Property id_prop;

@@ -50,12 +50,6 @@ protected:
 
     psi::Term prologToPsi(const PlTerm& pl_term) const;
 
-    //
-
-    std::string IDIntToString(int ID);
-
-    int IDStringToInt(const std::string& ID);
-
 };
 
 #endif

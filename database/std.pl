@@ -61,5 +61,5 @@ get_expected(discrete(_, [p(Prob, Val)|Rest]), MaxVal, MaxProb) :-
         MaxProb = Prob
       ;
         MaxVal = Val2,
-        MaxProb = Prob
+        MaxProb = Prob2
     ).
