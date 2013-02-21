@@ -434,6 +434,10 @@ int main(int argc, char **argv) {
 
         XmlRpc::XmlRpcValue database_name;
         if (nh_private.getParam(s_param.str(), database_name)) {
+            // delete the parameter (otherwise it is maintained, even if the reasoner is stopped - and
+            // will be loaded again next time the reasoner is started)
+            nh_private.deleteParam(s_param.str());
+
             if (database_name.getType() != XmlRpc::XmlRpcValue::TypeString) {
                 ROS_ERROR("Each database name must be a string.");
                 return -1;
