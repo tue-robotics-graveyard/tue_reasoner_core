@@ -345,7 +345,6 @@ bool Reasoner::pred_add_evidence(PlTerm a1) {
 
     for(map<string, wire_msgs::ObjectEvidence>::iterator it_id = id_to_evidence.begin(); it_id != id_to_evidence.end(); ++it_id) {
         ev_world.object_evidence.push_back(it_id->second);
-        cout << it_id->second << endl;
     }
 
     pub_evidence_.publish(ev_world);
