@@ -11,6 +11,8 @@
 
 #include <wire_msgs/WorldEvidence.h>
 
+#include <ros/package.h>
+
 using namespace std;
 
 Reasoner* REASONER;
@@ -399,6 +401,16 @@ PREDICATE(lookup_transform, 3) {
 
 bool Reasoner::loadDatabase(const string& filename) {
     return PlCall("consult", PlTermv(filename.c_str()));
+}
+
+PREDICATE(get_ros_package_path, 2) {
+    string package = (char*)A1;
+    std::string path = ros::package::getPath(package);
+    if (path != "") {
+        A2 = PlAtom(path.c_str());
+        return true;
+    }
+    return false;
 }
 
 

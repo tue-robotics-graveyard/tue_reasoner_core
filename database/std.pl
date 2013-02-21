@@ -5,6 +5,25 @@
 %:- multifile type/2.
 :- multifile property/3.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                  %
+%                      DATABASE MANAGEMENT                         %
+%                                                                  %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+load_database(ROSPackage, RelDBFilename) :-
+    get_ros_package_path(ROSPackage, Path),
+    atom_concat(Path, '/', Path2),
+    atom_concat(Path2, RelDBFilename, AbsDBFilename),
+    load_database(AbsDBFilename).
+
+load_database(AbsDatabaseFilename) :-
+    consult(AbsDatabaseFilename),
+    source_file(AbsDatabaseFilename). % check if file was loaded successfully
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
 object_property(ID, PROPERTY, VALUE) :-
     writeln('object_property/3 is obsolete; use property/3 instead'),
     property(ID, PROPERTY, VALUE).
