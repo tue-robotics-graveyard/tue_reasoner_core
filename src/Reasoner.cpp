@@ -293,7 +293,6 @@ bool Reasoner::pred_add_evidence(PlTerm a1) {
         }
 
         psi::Term id_psi = prologToPsi(e[1]);
-        string id = id_psi.toString();
 
         string attribute = (string)e[2];
         psi::Term value = prologToPsi(e[3]);
@@ -319,24 +318,17 @@ bool Reasoner::pred_add_evidence(PlTerm a1) {
             prop.pdf = pbl::PDFtoMsg(pmf);
         }
 
-        map<string, wire_msgs::ObjectEvidence>::iterator it_id = id_to_evidence.find(id);
+        map<string, wire_msgs::ObjectEvidence>::iterator it_id = id_to_evidence.find(id_psi.toString());
         if (it_id == id_to_evidence.end()) {
             wire_msgs::ObjectEvidence ev_obj;
             ev_obj.certainty = 1.0;
             ev_obj.properties.push_back(prop);
-            ev_obj.ID = id;
 
             if (!id_psi.isVariable()) {
-                wire_msgs::Property id_prop;
-                id_prop.attribute = "id";
-
-                pbl::PMF id_pmf;
-                id_pmf.setExact(id);
-                id_prop.pdf = pbl::PDFtoMsg(id_pmf);
-                ev_obj.properties.push_back(id_prop);
+                ev_obj.ID = id_psi.toString();
             }
 
-            id_to_evidence[id] = ev_obj;
+            id_to_evidence[id_psi.toString()] = ev_obj;
         } else {
             it_id->second.properties.push_back(prop);
         }
@@ -353,6 +345,7 @@ bool Reasoner::pred_add_evidence(PlTerm a1) {
 
     for(map<string, wire_msgs::ObjectEvidence>::iterator it_id = id_to_evidence.begin(); it_id != id_to_evidence.end(); ++it_id) {
         ev_world.object_evidence.push_back(it_id->second);
+        cout << it_id->second << endl;
     }
 
     pub_evidence_.publish(ev_world);
