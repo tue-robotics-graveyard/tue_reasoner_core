@@ -256,12 +256,12 @@ bool Reasoner::pred_property_list(PlTerm a1, PlTerm a2, PlTerm a3) {
         const wire::Object& obj = **it_obj;
 
         if (obj_id_psi.isVariable() || obj_id_psi.toString() == obj.getID()) {
-            const wire::Property* prop = obj.getProperty(property);
+            const wire::Property& prop = obj.getProperty(property);
 
-            if (prop) {
+            if (prop.isValid()) {
                 PlTermv binding(2);
                 binding[0] = obj.getID().c_str();
-                binding[1] = psiToProlog(pbl::toPSI(prop->getValue()));
+                binding[1] = psiToProlog(pbl::toPSI(prop.getValue()));
                 property_list.append(PlCompound("binding", binding));
             }
         }

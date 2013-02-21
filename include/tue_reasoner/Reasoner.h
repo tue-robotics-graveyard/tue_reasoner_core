@@ -6,7 +6,7 @@
 #include <tf/transform_listener.h>
 
 #include <wire/ServerROS.h>
-#include <wire/core/Property.h>
+#include <wire_interface/Property.h>
 
 #include "swi-cpp/SWI-cpp.h"
 
