@@ -21,6 +21,32 @@ load_database(AbsDatabaseFilename) :-
     consult(AbsDatabaseFilename),
     source_file(AbsDatabaseFilename). % check if file was loaded successfully
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                                                                  %
+%                            UTILITIES                             %
+%                                                                  %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+list_facts(F) :-
+    current_predicate(_, F),
+    catch(clause(F, true), _, fail).
+
+list_facts(PredicateName, F) :-
+    current_predicate(PredicateName, F),
+    catch(clause(F, true), _, fail).
+
+list_rules(Head, Body) :-
+    current_predicate(_, Head),
+    catch(clause(Head, Body), _, fail),
+    Body \= true.
+    
+list_rules(PredicateName, Head, Body) :-
+    current_predicate(PredicateName, Head),
+    catch(clause(Head, Body), _, fail),
+    Body \= true.
+
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
