@@ -36,6 +36,8 @@ public:
 
     bool pred_lookup_transform(PlTerm a1, PlTerm a2, PlTerm a3);
 
+    bool pred_transform_point(PlTerm frame_in, PlTerm point_in, PlTerm frame_out, PlTerm point_out);
+
 protected:
 
     wire::ServerROS* wire_server_;

@@ -86,6 +86,14 @@ property(ID1, near, ID2) :-
     XDiff < 1,
     YDiff < 1.
 
+property_expected(ID1, position, in_front_of(amigo)) :-
+    property_expected(ID1, position, [X, Y, Z]),
+    transform_point('/map', [X, Y, Z], '/base_link', [Dist, HorDist, _]),
+    Dist < 3,
+    HorDist > -2,
+    HorDist < 2,
+    write('in_front_of: '), write([X2, Y2, Z2]), nl.    
+
 % Returns expected value for property
 property_expected(X, Prop, Val) :-
     property(X, Prop, PDF),

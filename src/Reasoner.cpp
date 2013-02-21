@@ -399,6 +399,36 @@ PREDICATE(lookup_transform, 3) {
     return REASONER->pred_lookup_transform(A1, A2, A3);
 }
 
+bool Reasoner::pred_transform_point(PlTerm frame_in, PlTerm point_in, PlTerm frame_out, PlTerm point_out) {
+
+    psi::Term point_in_psi = prologToPsi(point_in);
+    double x = point_in_psi.get(0).getNumber();
+    double y = point_in_psi.get(1).getNumber();
+    double z = point_in_psi.get(2).getNumber();
+
+    tf::Stamped<tf::Point> point_stamped(tf::Point(x, y, z), ros::Time(), (string)frame_in);
+
+    try{
+        tf::Stamped<tf::Point> point_stamped_out;
+        tf_listener_->transformPoint((string)frame_out, point_stamped, point_stamped_out);
+
+        psi::Sequence seq;
+        seq.add(psi::Constant(point_stamped_out.getX()));
+        seq.add(psi::Constant(point_stamped_out.getY()));
+        seq.add(psi::Constant(point_stamped_out.getZ()));
+
+        point_out = psiToProlog(seq);
+        return true;
+    } catch (tf::TransformException& ex) {
+        ROS_ERROR("%s",ex.what());
+        return false;
+    }
+}
+
+PREDICATE(transform_point, 4) {
+    return REASONER->pred_transform_point(A1, A2, A3, A4);
+}
+
 bool Reasoner::loadDatabase(const string& filename) {
     return PlCall("consult", PlTermv(filename.c_str()));
 }
