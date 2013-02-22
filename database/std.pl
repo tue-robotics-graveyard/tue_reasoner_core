@@ -93,6 +93,10 @@ property_expected(ID1, position, in_front_of(amigo)) :-
     HorDist > -2,
     HorDist < 2.
 
+property_expected(amigo, pose, pose_2d(X, Y, Phi)) :-
+    lookup_transform('/map', '/base_link', transform(vector(X, Y, _), Quat)),
+    quaternion_to_rpy(Quat, rpy(Phi, _, _)).
+
 % Returns expected value for property
 property_expected(X, Prop, Val) :-
     property(X, Prop, PDF),

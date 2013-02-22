@@ -38,6 +38,8 @@ public:
 
     bool pred_transform_point(PlTerm frame_in, PlTerm point_in, PlTerm frame_out, PlTerm point_out);
 
+    bool pred_quaternion_to_rpy(PlTerm quat, PlTerm rpy);
+
 protected:
 
     wire::ServerROS* wire_server_;

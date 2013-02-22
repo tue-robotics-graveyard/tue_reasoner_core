@@ -421,6 +421,22 @@ PREDICATE(transform_point, 4) {
     return REASONER->pred_transform_point(A1, A2, A3, A4);
 }
 
+bool Reasoner::pred_quaternion_to_rpy(PlTerm quat, PlTerm rpy) {
+    psi::Term quat_psi = prologToPsi(quat);
+    tf::Quaternion q(quat_psi.get(0).getNumber(), quat_psi.get(1).getNumber(), quat_psi.get(2).getNumber(), quat_psi.get(3).getNumber());
+
+    tf::Matrix3x3 m(q);
+    double yaw, pitch, roll;
+    m.getEulerYPR(yaw, pitch, roll);
+
+    rpy = psiToProlog(psi::Compound("rpy", psi::Constant(yaw), psi::Constant(pitch), psi::Constant(roll)));
+    return true;
+}
+
+PREDICATE(quaternion_to_rpy, 2) {
+    return REASONER->pred_quaternion_to_rpy(A1, A2);
+}
+
 bool Reasoner::loadDatabase(const string& filename) {
     return PlCall("consult", PlTermv(filename.c_str()));
 }
