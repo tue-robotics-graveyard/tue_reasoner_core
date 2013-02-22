@@ -11,7 +11,7 @@
         <!-- World model parameters -->
         <param name="world_model_frame" value="/map"/>
         <param name="output_frame" value="/map"/>               
-        <param name="knowledge_filename" value="$(find tue_reasoner_core)/models/world_object_models.xml"/>   
+        <param name="knowledge_filename" value="$(find tue_knowledge)/models/wire_models.xml"/>   
         <param name="debug_verbose" value="false"/>   
     </node>
 
