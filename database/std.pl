@@ -89,9 +89,11 @@ property(ID1, near, ID2) :-
 property_expected(ID1, position, in_front_of(amigo)) :-
     property_expected(ID1, position, [X, Y, Z]),
     transform_point('/map', [X, Y, Z], '/base_link', [Dist, HorDist, _]),
-    Dist < 3,
-    HorDist > -2,
-    HorDist < 2.
+    Dist > 0,
+    Dist < 2,
+    abs(HorDist, HorDistAbs),
+    Ratio is Dist / HorDistAbs,
+    Ratio > 1.
 
 property_expected(amigo, pose, pose_2d(X, Y, Phi)) :-
     lookup_transform('/map', '/base_link', transform(vector(X, Y, _), Quat)),
