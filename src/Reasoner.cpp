@@ -300,11 +300,42 @@ bool Reasoner::pred_add_evidence(PlTerm a1) {
         pbl::PDF* pdf = 0;
         if (attribute == "position") {
             // Value = cartesian_coordinate(PDF, [FrameID])
-            frame_id = value.get(1).get(0).toString();
+            string frame_id_temp = value.get(1).get(0).toString();
+            if (frame_id != "" && frame_id != frame_id_temp) {
+                ROS_ERROR("Evidence may not contain position and orientation in different frames.");
+                return false;
+            } else {
+                frame_id = frame_id_temp;
+            }
+
             pdf = pbl::toPDF(value.get(0));
+
+            if (!pdf) {
+                ROS_ERROR("PDF specified in position evidence is not valid!: %s", value.get(0).toString().c_str());
+                return false;
+            }
+
+        } else if (attribute == "orientation") {
+            // Value = quaternion(PDF, [FrameID])
+            string frame_id_temp = value.get(1).get(0).toString();
+            if (frame_id != "" && frame_id != frame_id_temp) {
+                ROS_ERROR("Evidence may not contain position and orientation in different frames.");
+                return false;
+            } else {
+                frame_id = frame_id_temp;
+            }
+            pdf = pbl::toPDF(value.get(0));
+
+            if (!pdf) {
+                ROS_ERROR("PDF specified in orientation evidence is not valid!: %s", value.get(0).toString().c_str());
+                return false;
+            }
+
+            cout << pdf->toString() << endl;
         } else {
             pdf = pbl::toPDF(value);
         }
+
 
         wire_msgs::Property prop;
         prop.attribute = attribute;
@@ -313,6 +344,7 @@ bool Reasoner::pred_add_evidence(PlTerm a1) {
             prop.pdf = pbl::PDFtoMsg(*pdf);
             delete pdf;
         } else {
+            // TODO: this may not always result in correct behavior. Fix that.
             pbl::PMF pmf;
             pmf.setExact(value.toString());
             prop.pdf = pbl::PDFtoMsg(pmf);
@@ -332,11 +364,6 @@ bool Reasoner::pred_add_evidence(PlTerm a1) {
         } else {
             it_id->second.properties.push_back(prop);
         }
-    }
-
-    if (frame_id == "") {
-        ROS_ERROR("Position frame not specified!");
-        return false;
     }
 
     wire_msgs::WorldEvidence ev_world;
