@@ -12,7 +12,10 @@
         <param name="world_model_frame" value="/map"/>
         <param name="output_frame" value="/map"/>               
         <param name="knowledge_filename" value="$(find tue_knowledge)/models/wire_models.xml"/>   
-        <param name="debug_verbose" value="false"/>   
+        <param name="database_in" value="$(find wire_core)/wire.psi"/>
+        <param name="database_out" value="$(find wire_core)/wire_out.psi"/>
+        <param name="database_save_interval" value="5"/>
+
     </node>
 
 </launch>
