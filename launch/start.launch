@@ -5,17 +5,12 @@
     <arg name="args" default="" /> 
 
     <node pkg="tue_reasoner_core" type="reasoner" args="$(arg args)" respawn="false" name="reasoner" output="screen">
-
-        <param name="database1" value="$(find tue_reasoner_core)/database/std.pl"/>
-      
-        <!-- World model parameters -->
-        <param name="world_model_frame" value="/map"/>
-        <param name="output_frame" value="/map"/>               
-        <param name="knowledge_filename" value="$(find tue_knowledge)/models/wire_models.xml"/>   
-        <param name="database_in" value="$(find wire_core)/wire.psi"/>
-        <param name="database_out" value="$(find wire_core)/wire_out.psi"/>
-        <param name="database_save_interval" value="5"/>
-
+        <param name="database1" value="$(find tue_reasoner_core)/database/std.pl"/>    
     </node>
+
+    <include file="$(find wire_core)/launch/start.launch">
+        <arg name="models" value="$(find tue_knowledge)/models/wire_models.xml" />
+        <arg name="database_save_interval" value="0"/> <!-- do not use database files -->
+    </include>
 
 </launch>

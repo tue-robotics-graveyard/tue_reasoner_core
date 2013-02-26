@@ -2,6 +2,7 @@
 #define TUE_REASONER_H_
 
 #include <psi/Server.h>
+#include <psi/Client.h>
 
 #include <tf/transform_listener.h>
 
@@ -42,7 +43,9 @@ public:
 
 protected:
 
-    wire::ServerROS* wire_server_;
+    //wire::ServerROS* wire_server_;
+
+    psi::Client* wire_client_;
 
     ros::Publisher pub_evidence_;
 

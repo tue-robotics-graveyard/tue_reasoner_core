@@ -23,21 +23,29 @@ Reasoner::Reasoner(const std::string& service_query, const std::string& service_
     tf_listener_ = new tf::TransformListener();
 
     // create world model
-    wire_server_ = new wire::ServerROS();
-    wire_server_->registerEvidenceTopic("/world_evidence");
+    //wire_server_ = new wire::ServerROS();
+    //wire_server_->registerEvidenceTopic("/world_evidence");
+
+    wire_client_ = new psi::Client("/wire/query2", "wire/assert");
 
     pub_evidence_ = nh_private.advertise<wire_msgs::WorldEvidence>("/world_evidence", 10);
 }
 
 Reasoner::~Reasoner() {
-    delete wire_server_;
+    //delete wire_server_;
 }
 
 void Reasoner::start() {
-    wire_server_->start();
+    //wire_server_->start();
+    ros::spin();
 }
 
 vector<psi::BindingSet> Reasoner::processQuery(const psi::Term& query) {
+
+    if (query.getFunctor() == "property") {
+        ROS_INFO("processQuery: Rerouting to WIRE: %s", query.toString().c_str());
+        return wire_client_->query(query);
+    }
 
     timespec t_start, t_end;
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t_start);
@@ -248,6 +256,35 @@ psi::Term Reasoner::prologToPsi(const PlTerm& pl_term) const {
 
 bool Reasoner::pred_property_list(PlTerm a1, PlTerm a2, PlTerm a3) {
 
+    ROS_INFO("pred_property_list: Rerouting to WIRE: property(%s, %s, %s)", (char*)a1, (char*)a2, (char*)a3);
+
+    psi::Term obj_id_psi = prologToPsi(a1);
+    vector<psi::BindingSet> result = wire_client_->query(psi::Compound("property", obj_id_psi, prologToPsi(a2), psi::Variable("Value")));
+
+    PlTail property_list(a3);
+
+    for(vector<psi::BindingSet>::iterator it_res = result.begin(); it_res != result.end(); ++it_res) {
+        psi::BindingSet b = *it_res;
+        psi::Term val = b.get(psi::Variable("Value"));
+        if (val.isValid()) {
+            PlTermv binding(2);
+
+            if (obj_id_psi.isVariable()) {
+                binding[0] = psiToProlog(b.get(obj_id_psi.toVariable()));
+            } else {
+                binding[0] = obj_id_psi.toString().c_str();
+            }
+
+            binding[1] = psiToProlog(val);
+            property_list.append(PlCompound("binding", binding));
+        }
+    }
+
+    property_list.close();
+
+    return true;
+
+/*
     psi::Term obj_id_psi = prologToPsi(a1);
     string property = (char*)a2;
     PlTail property_list(a3);
@@ -272,6 +309,7 @@ bool Reasoner::pred_property_list(PlTerm a1, PlTerm a2, PlTerm a3) {
     property_list.close();
 
     return true;
+    */
 }
 
 PREDICATE(property_list, 3) {
