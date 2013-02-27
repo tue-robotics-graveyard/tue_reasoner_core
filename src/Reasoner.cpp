@@ -254,20 +254,25 @@ psi::Term Reasoner::prologToPsi(const PlTerm& pl_term) const {
     }
 }
 
-bool Reasoner::pred_property_list(PlTerm a1, PlTerm a2, PlTerm a3) {
+bool Reasoner::pred_property_list(PlTerm a1, PlTerm a2, PlTerm a3, PlTerm a4) {
 
     ROS_INFO("pred_property_list: Rerouting to WIRE: property(%s, %s, %s)", (char*)a1, (char*)a2, (char*)a3);
 
     psi::Term obj_id_psi = prologToPsi(a1);
-    vector<psi::BindingSet> result = wire_client_->query(psi::Compound("property", obj_id_psi, prologToPsi(a2), psi::Variable("Value")));
+    psi::Term attr_psi = prologToPsi(a2);
+    vector<psi::BindingSet> result = wire_client_->query(psi::Compound("property",
+                                                                            obj_id_psi,
+                                                                            prologToPsi(a2),
+                                                                            psi::Variable("Value"),
+                                                                            prologToPsi(a3)));
 
-    PlTail property_list(a3);
+    PlTail property_list(a4);
 
     for(vector<psi::BindingSet>::iterator it_res = result.begin(); it_res != result.end(); ++it_res) {
         psi::BindingSet b = *it_res;
         psi::Term val = b.get(psi::Variable("Value"));
         if (val.isValid()) {
-            PlTermv binding(2);
+            PlTermv binding(3);
 
             if (obj_id_psi.isVariable()) {
                 binding[0] = psiToProlog(b.get(obj_id_psi.toVariable()));
@@ -275,7 +280,13 @@ bool Reasoner::pred_property_list(PlTerm a1, PlTerm a2, PlTerm a3) {
                 binding[0] = obj_id_psi.toString().c_str();
             }
 
-            binding[1] = psiToProlog(val);
+            if (attr_psi.isVariable()) {
+                binding[1] = psiToProlog(b.get(attr_psi.toVariable()));
+            } else {
+                binding[1] = attr_psi.toString().c_str();
+            }
+
+            binding[2] = psiToProlog(val);
             property_list.append(PlCompound("binding", binding));
         }
     }
@@ -312,8 +323,8 @@ bool Reasoner::pred_property_list(PlTerm a1, PlTerm a2, PlTerm a3) {
     */
 }
 
-PREDICATE(property_list, 3) {
-    return REASONER->pred_property_list(A1, A2, A3);
+PREDICATE(property_list, 4) {
+    return REASONER->pred_property_list(A1, A2, A3, A4);
 }
 
 bool Reasoner::pred_add_evidence(PlTerm a1) {

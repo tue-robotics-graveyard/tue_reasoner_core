@@ -31,7 +31,7 @@ public:
 
     // predicates
 
-    bool pred_property_list(PlTerm a1, PlTerm a2, PlTerm a3);
+    bool pred_property_list(PlTerm a1, PlTerm a2, PlTerm a3, PlTerm a4);
 
     bool pred_add_evidence(PlTerm a1);
 

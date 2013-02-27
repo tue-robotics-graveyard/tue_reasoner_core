@@ -61,8 +61,8 @@ position(ID, point(X, Y, Z)) :-
     property(ID, position, gaussian(vector([X, Y, Z]), _)).
 
 property(ID, Prop, Value) :-
-    property_list(ID, Prop, ValueList),
-    member(binding(ID, Value), ValueList).
+    property_list(ID, Prop, '/map', Bindings),
+    member(binding(ID, Prop, Value), Bindings).
 
 % position
 
@@ -85,6 +85,10 @@ property(ID1, near, ID2) :-
     abs(Y1-Y2, YDiff),
     XDiff < 1,
     YDiff < 1.
+
+property(ID, Prop, Value, FrameID) :-
+    property_list(ID, Prop, FrameID, Bindings),
+    member(binding(ID, Prop, Value), Bindings).
 
 property_expected(ID1, position, in_front_of(amigo)) :-
     property_expected(ID1, position, [X, Y, Z]),
