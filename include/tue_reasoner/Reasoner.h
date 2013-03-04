@@ -47,8 +47,6 @@ protected:
 
     psi::Client* wire_client_;
 
-    ros::Publisher pub_evidence_;
-
     tf::TransformListener* tf_listener_;
 
     PlTerm psiToProlog(const psi::Term& term) const;

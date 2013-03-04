@@ -9,8 +9,6 @@
 #include <problib/conversions.h>
 #include <problib/conversions_psi.h>
 
-#include <wire_msgs/WorldEvidence.h>
-
 #include <ros/package.h>
 
 using namespace std;
@@ -27,8 +25,6 @@ Reasoner::Reasoner(const std::string& service_query, const std::string& service_
     //wire_server_->registerEvidenceTopic("/world_evidence");
 
     wire_client_ = new psi::Client("/wire/query2", "wire/assert");
-
-    pub_evidence_ = nh_private.advertise<wire_msgs::WorldEvidence>("/world_evidence", 10);
 }
 
 Reasoner::~Reasoner() {
@@ -326,112 +322,6 @@ bool Reasoner::pred_property_list(PlTerm a1, PlTerm a2, PlTerm a3, PlTerm a4) {
 PREDICATE(property_list, 4) {
     return REASONER->pred_property_list(A1, A2, A3, A4);
 }
-
-bool Reasoner::pred_add_evidence(PlTerm a1) {
-    PlTail tail(a1);
-    PlTerm e;
-
-    map<string, wire_msgs::ObjectEvidence> id_to_evidence;
-
-    string frame_id = "";
-
-    while(tail.next(e)) {
-        string functor = (string)e.name();
-        if (functor != "property" || e.arity() != 3) {
-            return false;
-        }
-
-        psi::Term id_psi = prologToPsi(e[1]);
-
-        string attribute = (string)e[2];
-        psi::Term value = prologToPsi(e[3]);
-
-        pbl::PDF* pdf = 0;
-        if (attribute == "position") {
-            // Value = cartesian_coordinate(PDF, [FrameID])
-            string frame_id_temp = value.get(1).get(0).toString();
-            if (frame_id != "" && frame_id != frame_id_temp) {
-                ROS_ERROR("Evidence may not contain position and orientation in different frames.");
-                return false;
-            } else {
-                frame_id = frame_id_temp;
-            }
-
-            pdf = pbl::toPDF(value.get(0));
-
-            if (!pdf) {
-                ROS_ERROR("PDF specified in position evidence is not valid!: %s", value.get(0).toString().c_str());
-                return false;
-            }
-
-        } else if (attribute == "orientation") {
-            // Value = quaternion(PDF, [FrameID])
-            string frame_id_temp = value.get(1).get(0).toString();
-            if (frame_id != "" && frame_id != frame_id_temp) {
-                ROS_ERROR("Evidence may not contain position and orientation in different frames.");
-                return false;
-            } else {
-                frame_id = frame_id_temp;
-            }
-            pdf = pbl::toPDF(value.get(0));
-
-            if (!pdf) {
-                ROS_ERROR("PDF specified in orientation evidence is not valid!: %s", value.get(0).toString().c_str());
-                return false;
-            }
-
-            cout << pdf->toString() << endl;
-        } else {
-            pdf = pbl::toPDF(value);
-        }
-
-
-        wire_msgs::Property prop;
-        prop.attribute = attribute;
-
-        if (pdf) {
-            prop.pdf = pbl::PDFtoMsg(*pdf);
-            delete pdf;
-        } else {
-            // TODO: this may not always result in correct behavior. Fix that.
-            pbl::PMF pmf;
-            pmf.setExact(value.toString());
-            prop.pdf = pbl::PDFtoMsg(pmf);
-        }
-
-        map<string, wire_msgs::ObjectEvidence>::iterator it_id = id_to_evidence.find(id_psi.toString());
-        if (it_id == id_to_evidence.end()) {
-            wire_msgs::ObjectEvidence ev_obj;
-            ev_obj.certainty = 1.0;
-            ev_obj.properties.push_back(prop);
-
-            if (!id_psi.isVariable()) {
-                ev_obj.ID = id_psi.toString();
-            }
-
-            id_to_evidence[id_psi.toString()] = ev_obj;
-        } else {
-            it_id->second.properties.push_back(prop);
-        }
-    }
-
-    wire_msgs::WorldEvidence ev_world;
-    ev_world.header.frame_id = frame_id;
-    ev_world.header.stamp = ros::Time::now();
-
-    for(map<string, wire_msgs::ObjectEvidence>::iterator it_id = id_to_evidence.begin(); it_id != id_to_evidence.end(); ++it_id) {
-        ev_world.object_evidence.push_back(it_id->second);
-    }
-
-    pub_evidence_.publish(ev_world);
-
-    return true;
-}
-
-PREDICATE(add_evidence, 1) {
-    return REASONER->pred_add_evidence(A1);
-}
-
 
 bool Reasoner::pred_lookup_transform(PlTerm a1, PlTerm a2, PlTerm a3) {
     tf::StampedTransform transform;
