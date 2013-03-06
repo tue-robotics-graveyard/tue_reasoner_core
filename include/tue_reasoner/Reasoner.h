@@ -15,7 +15,7 @@ class Reasoner : public psi::Server {
 
 public:
 
-    Reasoner(const std::string& service_query, const std::string& service_assert);
+    Reasoner(const std::string& service_name);
 
     virtual ~Reasoner();
 

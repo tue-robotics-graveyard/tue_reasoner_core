@@ -15,7 +15,7 @@ using namespace std;
 
 Reasoner* REASONER;
 
-Reasoner::Reasoner(const std::string& service_query, const std::string& service_assert) : psi::Server(service_query, service_assert) {
+Reasoner::Reasoner(const std::string& service_name) : psi::Server(service_name) {
     ros::NodeHandle nh_private("~");
 
     tf_listener_ = new tf::TransformListener();
@@ -24,7 +24,7 @@ Reasoner::Reasoner(const std::string& service_query, const std::string& service_
     //wire_server_ = new wire::ServerROS();
     //wire_server_->registerEvidenceTopic("/world_evidence");
 
-    wire_client_ = new psi::Client("/wire/query2", "wire/assert");
+    wire_client_ = new psi::Client("/wire");
 }
 
 Reasoner::~Reasoner() {
@@ -430,7 +430,7 @@ int main(int argc, char **argv) {
 
     PlEngine prolog_engine(argc, argv);
 
-    REASONER = new Reasoner("/reasoner/query", "/reasoner/assert");
+    REASONER = new Reasoner("/reasoner");
 
     for(int i_database = 1; true; ++i_database) {
         stringstream s_param;

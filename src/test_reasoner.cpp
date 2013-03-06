@@ -33,7 +33,7 @@ int main(int argc, char **argv) {
 
     /* * * * * * * * * TEST * * * * * * * * */
 
-    psi::Client client("/reasoner/query", "/reasoner/assert");
+    psi::Client client("/reasoner");
 
     /*
     vector<BindingSet> result =
