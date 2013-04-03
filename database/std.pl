@@ -106,7 +106,8 @@ property_expected(amigo, pose, pose_2d(X, Y, Phi)) :-
 % Returns expected value for property
 property_expected(X, Prop, Val) :-
     property(X, Prop, PDF),
-    get_expected(PDF, Val).
+    get_expected(PDF, Val2),
+    (Val2 = exact(Val) ; Val = Val2).
 
 % Returns expected value of a PDF
 get_expected(gaussian(vector(Val), _), Val).
