@@ -39,7 +39,7 @@ void Reasoner::start() {
 vector<psi::BindingSet> Reasoner::processQuery(const psi::Term& query) {
 
     if (query.getFunctor() == "property") {
-        ROS_INFO("processQuery: Rerouting to WIRE: %s", query.toString().c_str());
+        ROS_DEBUG("processQuery: Rerouting to WIRE: %s", query.toString().c_str());
         return wire_client_->query(query);
     }
 
@@ -54,7 +54,7 @@ vector<psi::BindingSet> Reasoner::processQuery(const psi::Term& query) {
     print_out << "?- ";
     print_out << (char*)av[0];
 
-    ROS_INFO("%s", print_out.str().c_str());
+    ROS_DEBUG("%s", print_out.str().c_str());
 
     vector<psi::BindingSet> result;
 
@@ -74,7 +74,7 @@ vector<psi::BindingSet> Reasoner::processQuery(const psi::Term& query) {
     }
 
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t_end);
-    ROS_INFO("       Reasoner: query took  %f seconds.", (t_end.tv_sec - t_start.tv_sec) + double(t_end.tv_nsec - t_start.tv_nsec) / 1e9);
+    ROS_DEBUG("       Reasoner: query took  %f seconds.", (t_end.tv_sec - t_start.tv_sec) + double(t_end.tv_nsec - t_start.tv_nsec) / 1e9);
 
     return result;
 }
@@ -95,7 +95,7 @@ bool Reasoner::processAssert(const vector<psi::Term>& facts) {
         map<string, PlTerm> str_to_var;
         av[0] = psiToProlog(term, str_to_var);
 
-        ROS_INFO("?- \033[1m%s(%s)\033[0m", "assertz", (char*)av[0]);
+        ROS_DEBUG("?- \033[1m%s(%s)\033[0m", "assertz", (char*)av[0]);
         PlQuery q("assertz", av);
 
         try {
@@ -125,7 +125,7 @@ bool Reasoner::processRetract(const std::vector<psi::Term>& facts) {
         map<string, PlTerm> str_to_var;
         av[0] = psiToProlog(term, str_to_var);
 
-        ROS_INFO("?- \033[1m%s(%s)\033[0m", "retractall", (char*)av[0]);
+        ROS_DEBUG("?- \033[1m%s(%s)\033[0m", "retractall", (char*)av[0]);
         PlQuery q("retractall", av);
 
         try {
@@ -252,7 +252,7 @@ psi::Term Reasoner::prologToPsi(const PlTerm& pl_term) const {
 
 bool Reasoner::pred_property_list(PlTerm a1, PlTerm a2, PlTerm a3, PlTerm a4) {
 
-    ROS_INFO("pred_property_list: Rerouting to WIRE: property(%s, %s, %s)", (char*)a1, (char*)a2, (char*)a3);
+    ROS_DEBUG("pred_property_list: Rerouting to WIRE: property(%s, %s, %s)", (char*)a1, (char*)a2, (char*)a3);
 
     psi::Term obj_id_psi = prologToPsi(a1);
     psi::Term attr_psi = prologToPsi(a2);
