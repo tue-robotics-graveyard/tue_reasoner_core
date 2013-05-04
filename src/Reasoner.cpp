@@ -460,10 +460,11 @@ int main(int argc, char **argv) {
     string fact_str;
     nh_private.getParam("assert", fact_str);
     psi::Term fact = psi::stringToTerm(fact_str);
-
-    vector<psi::Term> facts;
-    facts.push_back(fact);
-    REASONER->processAssert(facts);
+    if (fact.isValid()) {
+        vector<psi::Term> facts;
+        facts.push_back(fact);
+        REASONER->processAssert(facts);
+    }
 
     REASONER->start();
 
