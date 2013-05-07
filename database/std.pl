@@ -45,10 +45,25 @@ list_rules(PredicateName, Head, Body) :-
     catch(clause(Head, Body), _, fail),
     Body \= true.
 
-
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%                       SUBCLASS_OF, ETC
+%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+subclass_of(A, B) :-
+    direct_subclass_of(A, B).
+subclass_of(A, C) :-
+    direct_subclass_of(A, B),
+    subclass_of(B, C).
+                
+instance_of(Obj, Class) :-
+    property_expected(Obj, class_label, Class).
+instance_of(Obj, Class) :-
+    property_expected(Obj, class_label, A),
+    subclass_of(A, Class).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 object_property(ID, PROPERTY, VALUE) :-
     writeln('object_property/3 is obsolete; use property/3 instead'),
