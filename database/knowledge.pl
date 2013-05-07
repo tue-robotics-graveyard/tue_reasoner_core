@@ -22,10 +22,10 @@ base_pose(bed_1,             pose_2d(6.058, -1.598,  3.113)).
 base_pose(bed_cabinet_1,     pose_2d(3.797, -1.240, -1.608)).
 base_pose(trashbin_1,        pose_2d(5.5,    1.443,  1.101)).
 
-region_of_interest(cabinet_expedit_1, point_3d(4.807,  2.102, 1.000)).
-region_of_interest(bed_1,             point_3d(5.009, -1.706, 1.000)).
-region_of_interest(bed_cabinet_1,     point_3d(3.729, -2.286, 1.000)).
-region_of_interest(trashbin1,     	  point_3d(5.55,    1.90,   1.1)).
+point_of_interest(cabinet_expedit_1, point_3d(4.807,  2.102, 1.000)).
+point_of_interest(bed_1,             point_3d(5.009, -1.706, 1.000)).
+point_of_interest(bed_cabinet_1,     point_3d(3.729, -2.286, 1.000)).
+point_of_interest(trashbin1,     	  point_3d(5.55,    1.90,   1.1)).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                  HELPER RULES
