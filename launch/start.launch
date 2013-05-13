@@ -2,19 +2,15 @@
 
 <launch>
 
+    <arg name="machine" value="$(optenv MACHINE_REASONER localhost)"/>
+    <include file="$(find amigo_machine_files)/machines/$(arg machine).machine" />
+
     <arg name="args" default="" /> 
-    <arg name="wire_frame" default="/map" /> 
     <arg name="env" default="$(optenv ROBOT_ENV robotics_testlab_A)" />
 
-    <node pkg="tue_reasoner_core" type="reasoner" args="$(arg args)" respawn="false" name="reasoner" output="screen">
+    <node pkg="tue_reasoner_core" type="reasoner" args="$(arg args)" respawn="false" name="reasoner" output="screen" machine="$(arg machine)">
         <param name="database1" value="$(find tue_reasoner_core)/database/std.pl"/>
         <param name="assert" value="environment($(arg env))"/>
     </node>
-
-    <include file="$(find wire_core)/launch/start.launch">
-        <arg name="models" value="$(find tue_knowledge)/models/wire_models.xml" />
-        <arg name="database_save_interval" value="0"/> <!-- do not use database files -->
-        <arg name="wire_frame" value="$(arg wire_frame)"/>
-    </include>
 
 </launch>
