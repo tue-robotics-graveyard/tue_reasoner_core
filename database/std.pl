@@ -4,6 +4,8 @@
 % multifile allows multiple definitions of a predicate over different files
 %:- multifile type/2.
 :- multifile property/3.
+:- multifile instance_of/2.
+:- multifile instance_of/4.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                  %
