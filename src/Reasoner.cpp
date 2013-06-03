@@ -11,6 +11,9 @@
 
 #include <ros/package.h>
 
+// Needed for specifying custom signal handler
+#include <signal.h>
+
 using namespace std;
 
 Reasoner* REASONER;
@@ -417,6 +420,9 @@ PREDICATE(get_ros_package_path, 2) {
     return false;
 }
 
+static void sighandler(int signo) {
+    ros::shutdown();
+}
 
 int main(int argc, char **argv) {
 
@@ -429,6 +435,10 @@ int main(int argc, char **argv) {
     //PlEngine prolog_engine(argv[0]);
 
     PlEngine prolog_engine(argc, argv);
+
+    // Prolog has its own signal handler which seems to interfere with ROS' handler
+    // Therefore, make sure ROS is shutdown if Prolog receives an interrupt signal
+    PL_signal(SIGINT, &sighandler);
 
     REASONER = new Reasoner("/reasoner");
 
