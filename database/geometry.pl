@@ -25,7 +25,7 @@
 :- dynamic environment/1.
 :- dynamic challenge/1.
 
-:- dynamic instance_of/4
+:- dynamic instance_of/4.
 
 challenge(none).
 
