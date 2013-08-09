@@ -11,6 +11,9 @@
 
 #include "swi-cpp/SWI-cpp.h"
 
+// Needed for specifying custom signal handler
+#include <signal.h>
+
 class ReasonerServer : public psi::Server {
 
 public:
@@ -48,6 +51,8 @@ protected:
     psi::Client* wire_client_;
 
     tf::TransformListener* tf_listener_;
+
+    static void sighandler(int signo);
 
     PlTerm psiToProlog(const psi::Term& term) const;
 

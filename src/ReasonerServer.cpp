@@ -11,9 +11,6 @@
 
 #include <ros/package.h>
 
-// Needed for specifying custom signal handler
-#include <signal.h>
-
 using namespace std;
 
 ReasonerServer* REASONER;
@@ -28,6 +25,10 @@ ReasonerServer::ReasonerServer(const std::string& service_name) : psi::Server(se
     //wire_server_->registerEvidenceTopic("/world_evidence");
 
     wire_client_ = new psi::Client("/wire");
+
+    // Prolog has its own signal handler which seems to interfere with ROS' handler
+    // Therefore, make sure ROS is shutdown if Prolog receives an interrupt signal
+    PL_signal(SIGINT, &ReasonerServer::sighandler);
 }
 
 ReasonerServer::~ReasonerServer() {
@@ -420,65 +421,6 @@ PREDICATE(get_ros_package_path, 2) {
     return false;
 }
 
-static void sighandler(int signo) {
-    ros::shutdown();
-}
-
-int main(int argc, char **argv) {
-
-    // Initialize node
-    ros::init(argc, argv, "reasoner");
-    ros::NodeHandle nh_private("~");
-
-    // Initialize Prolog Engine
-    putenv((char*)"SWI_HOME_DIR=/usr/lib/swi-prolog");
-    //PlEngine prolog_engine(argv[0]);
-
-    PlEngine prolog_engine(argc, argv);
-
-    // Prolog has its own signal handler which seems to interfere with ROS' handler
-    // Therefore, make sure ROS is shutdown if Prolog receives an interrupt signal
-    PL_signal(SIGINT, &sighandler);
-
-    REASONER = new ReasonerServer("/reasoner");
-
-    for(int i_database = 1; true; ++i_database) {
-        stringstream s_param;
-        s_param << "database" << i_database;
-
-        XmlRpc::XmlRpcValue database_name;
-        if (nh_private.getParam(s_param.str(), database_name)) {
-            // delete the parameter (otherwise it is maintained, even if the reasoner is stopped - and
-            // will be loaded again next time the reasoner is started)
-            nh_private.deleteParam(s_param.str());
-
-            if (database_name.getType() != XmlRpc::XmlRpcValue::TypeString) {
-                ROS_ERROR("Each database name must be a string.");
-                return -1;
-            }
-
-            string database_name_str = (string)database_name;
-            if (!REASONER->loadDatabase(database_name_str)) {
-                ROS_ERROR("Failed to load database: %s", (database_name_str).c_str());
-                return -1;
-            }
-        } else {
-            break;
-        }
-    }
-
-    string fact_str;
-    nh_private.getParam("assert", fact_str);
-    psi::Term fact = psi::stringToTerm(fact_str);
-    if (fact.isValid()) {
-        vector<psi::Term> facts;
-        facts.push_back(fact);
-        REASONER->processAssert(facts);
-    }
-
-    REASONER->start();
-
-    delete REASONER;
-
-    return 0;
+void ReasonerServer::sighandler(int signo) {
+    //ros::shutdown();
 }

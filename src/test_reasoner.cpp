@@ -1,66 +1,61 @@
-#include <ros/ros.h>
-
-#include <psi/Client.h>
-#include <psi/Variable.h>
-#include <psi/Compound.h>
-#include <psi/Constant.h>
+#include <reasoner/Reasoner.h>
 
 using namespace std;
 
-using namespace psi;
-
 int main(int argc, char **argv) {
 
-    // Initialize node
-	ros::init(argc, argv, "ReasonerTest");
-	ros::NodeHandle nh_private("~");
+    Reasoner r;
 
-    /* * * * * * * * * LOAD DATABASE * * * * * * * * */
+//    // Initialize node
+//	ros::init(argc, argv, "ReasonerTest");
+//	ros::NodeHandle nh_private("~");
 
-    /*
-    ros::ServiceClient load_db_client = nh_private.serviceClient<tue_reasoner_msgs::LoadDatabase>("/reasoner/load_database");
-    load_db_client.waitForExistence();
+//    /* * * * * * * * * LOAD DATABASE * * * * * * * * */
 
-    if (argc <= 1) {
-        cout << "Please specify database filename" << endl;
-        return 1;
-    }
+//    /*
+//    ros::ServiceClient load_db_client = nh_private.serviceClient<tue_reasoner_msgs::LoadDatabase>("/reasoner/load_database");
+//    load_db_client.waitForExistence();
 
-    tue_reasoner_msgs::LoadDatabase load_db;
-    load_db.request.db_filename = argv[1];
-    load_db_client.call(load_db);
-    */
+//    if (argc <= 1) {
+//        cout << "Please specify database filename" << endl;
+//        return 1;
+//    }
 
-    /* * * * * * * * * TEST * * * * * * * * */
+//    tue_reasoner_msgs::LoadDatabase load_db;
+//    load_db.request.db_filename = argv[1];
+//    load_db_client.call(load_db);
+//    */
 
-    psi::Client client("/reasoner");
+//    /* * * * * * * * * TEST * * * * * * * * */
 
-    /*
-    vector<BindingSet> result =
-            client.query(Compound(",",
-                          Compound("position", Variable("X"), Variable("P")),
-                          Compound("type", Variable("X"), Variable("Y"))
-                         )
-                 );
-    */
+//    psi::Client client("/reasoner");
 
-    vector<BindingSet> result = client.query(Compound("mirror", Constant("a"), Variable("X")));
+//    /*
+//    vector<BindingSet> result =
+//            client.query(Compound(",",
+//                          Compound("position", Variable("X"), Variable("P")),
+//                          Compound("type", Variable("X"), Variable("Y"))
+//                         )
+//                 );
+//    */
 
-    if (result.empty()) {
-        cout << "No." << endl;
-    } else {
-        for(unsigned int i = 0; i < result.size(); ++i) {
-            cout << result[i].toString() << endl;
-        }
-    }
+//    vector<BindingSet> result = client.query(Compound("mirror", Constant("a"), Variable("X")));
 
-    /*
+//    if (result.empty()) {
+//        cout << "No." << endl;
+//    } else {
+//        for(unsigned int i = 0; i < result.size(); ++i) {
+//            cout << result[i].toString() << endl;
+//        }
+//    }
 
-    interface::query(Compound("is_class_at_coordinates", Constant("exit"), Variable("P")));
+//    /*
 
-    interface::assertFact(Compound("type", Constant("milk"), Constant("drink")));
+//    interface::query(Compound("is_class_at_coordinates", Constant("exit"), Variable("P")));
 
-    interface::retract(Compound("type", Constant("coke"), Variable("Y")));
-    */
+//    interface::assertFact(Compound("type", Constant("milk"), Constant("drink")));
+
+//    interface::retract(Compound("type", Constant("coke"), Variable("Y")));
+//    */
 
 }
