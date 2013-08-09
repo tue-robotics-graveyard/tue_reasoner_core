@@ -8,6 +8,8 @@
 // Needed for specifying custom signal handler
 #include <signal.h>
 
+#include <ros/package.h>
+
 Reasoner::Reasoner() {
     // Initialize Prolog Engine
     putenv((char*)"SWI_HOME_DIR=/usr/lib/swi-prolog");
@@ -22,6 +24,11 @@ Reasoner::Reasoner() {
     // Prolog has its own signal handler which seems to interfere with ROS' handler
     // Therefore, make sure ROS is shutdown if Prolog receives an interrupt signal
     PL_signal(SIGINT, &Reasoner::sighandler);
+
+    // load std.pl
+    std::string package_path = ros::package::getPath("tue_reasoner_core");
+    loadDatabase(package_path + "/prolog/std.pl");
+
 }
 
 Reasoner::~Reasoner() {
@@ -59,6 +66,10 @@ std::vector<psi::BindingSet> Reasoner::query(const psi::Term& query) {
     }
 
     return result;
+}
+
+bool Reasoner::loadDatabase(const std::string& filename) {
+    return PlCall("consult", PlTermv(filename.c_str()));
 }
 
 PlTerm Reasoner::psiToProlog(const psi::Term& term) const {

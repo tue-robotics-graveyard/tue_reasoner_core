@@ -17,6 +17,8 @@ public:
 
     std::vector<psi::BindingSet> query(const psi::Term& query);
 
+    bool loadDatabase(const std::string& filename);
+
 protected:
 
     PlEngine* prolog_engine_;
