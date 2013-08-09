@@ -123,3 +123,20 @@ PREDICATE(extern, 3) {
 
     return true;
 }
+
+PREDICATE(rosparam, 2) {
+    std::string param_name = (char*)A1;
+
+    ros::NodeHandle nh;
+
+    XmlRpc::XmlRpcValue v;
+    if (!nh.getParam(param_name, v)) {
+        return false;
+    }
+
+    if (v.getType() == XmlRpc::XmlRpcValue::TypeString) {
+        A2 = PlAtom(((std::string)v).c_str());
+    }
+
+    return true;
+}
