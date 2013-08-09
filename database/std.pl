@@ -7,6 +7,13 @@
 :- multifile instance_of/2.
 :- multifile instance_of/4.
 
+simpletest(a).
+simpletest(b).
+simpletest([1,2,3]).
+simpletest(A) :- bla(A).
+
+bla(test(1, 2, foo([3, 4]))).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                  %
 %                      DATABASE MANAGEMENT                         %

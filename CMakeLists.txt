@@ -50,6 +50,7 @@ file(GLOB_RECURSE HEADER_FILES_3RD 3rdparty/*.h)
 
 rosbuild_add_library(reasoner   src/ReasonerServer.cpp
                                 src/Reasoner.cpp
+                                src/conversions.cpp
                                 ${HEADER_FILES}
                                 ${HEADER_FILES_3RD})
 target_link_libraries(reasoner ${SWIPL_LIB})
