@@ -48,7 +48,7 @@ include_directories(${PROJECT_SOURCE_DIR}/3rdparty)
 file(GLOB_RECURSE HEADER_FILES include/*.h)
 file(GLOB_RECURSE HEADER_FILES_3RD 3rdparty/*.h)
 
-rosbuild_add_executable(reasoner src/Reasoner.cpp
+rosbuild_add_executable(reasoner src/ReasonerServer.cpp
                                  ${HEADER_FILES}
                                  ${HEADER_FILES_3RD}
 )

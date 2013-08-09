@@ -1,6 +1,6 @@
 #include <ros/ros.h>
 
-#include "tue_reasoner/Reasoner.h"
+#include "tue_reasoner/ReasonerServer.h"
 
 #include <psi/Constant.h>
 #include <psi/Compound.h>
