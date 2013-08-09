@@ -60,6 +60,9 @@ target_link_libraries(reasoner_node reasoner ${SWIPL_LIB})
 rosbuild_add_executable(test_reasoner src/test_reasoner.cpp)								 
 target_link_libraries(test_reasoner reasoner)
 
+rosbuild_add_executable(repl src/repl.cpp)
+target_link_libraries(repl reasoner)
+
 rosbuild_add_executable(test_swi src/test_swi.cpp)
 target_link_libraries(test_swi ${SWIPL_LIB})
 

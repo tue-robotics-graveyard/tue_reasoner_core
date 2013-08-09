@@ -32,7 +32,7 @@ void Reasoner::sighandler(int signo) {
     //ros::shutdown();
 }
 
-std::vector<psi::BindingSet> Reasoner::processQuery(const psi::Term& query) {
+std::vector<psi::BindingSet> Reasoner::query(const psi::Term& query) {
     PlTermv av(1);
     std::map<std::string, PlTerm> str_to_var;
     av[0] = psiToProlog(query, str_to_var);

@@ -15,7 +15,7 @@ public:
 
     virtual ~Reasoner();
 
-    std::vector<psi::BindingSet> processQuery(const psi::Term& query);
+    std::vector<psi::BindingSet> query(const psi::Term& query);
 
 protected:
 
