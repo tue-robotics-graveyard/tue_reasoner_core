@@ -6,8 +6,8 @@
 #include <psi/Compound.h>
 #include <psi/Sequence.h>
 
-#include <problib/conversions.h>
-#include <problib/conversions_psi.h>
+//#include <problib/conversions.h>
+//#include <problib/conversions_psi.h>
 
 #include <ros/package.h>
 

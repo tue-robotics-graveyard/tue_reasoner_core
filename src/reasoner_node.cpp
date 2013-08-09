@@ -1,5 +1,7 @@
 #include "reasoner/ReasonerServer.h"
 
+#include <psi/conversions.h>
+
 #include <ros/package.h>
 
 using namespace std;

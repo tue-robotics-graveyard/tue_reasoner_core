@@ -6,7 +6,7 @@ using namespace std;
 
 int main(int argc, char **argv) {
 
-	putenv("SWI_HOME_DIR=/usr/lib/swi-prolog");
+    putenv((char*)"SWI_HOME_DIR=/usr/lib/swi-prolog");
 	PlEngine e(argv[0]);
 
 	PlTermv file(PlAtom("/home/sdries/ros/tue/dev/sjoerd/tue_reasoner/3rdparty/swi-cpp/reasoner.pl"));
