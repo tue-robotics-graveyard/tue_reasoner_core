@@ -13,7 +13,6 @@
 
 using namespace std;
 
-ReasonerServer* REASONER;
 
 ReasonerServer::ReasonerServer(const std::string& service_name) : psi::Server(service_name) {
     ros::NodeHandle nh_private("~");
@@ -323,10 +322,6 @@ bool ReasonerServer::pred_property_list(PlTerm a1, PlTerm a2, PlTerm a3, PlTerm 
     */
 }
 
-PREDICATE(property_list, 4) {
-    return REASONER->pred_property_list(A1, A2, A3, A4);
-}
-
 bool ReasonerServer::pred_lookup_transform(PlTerm a1, PlTerm a2, PlTerm a3) {
     tf::StampedTransform transform;
 
@@ -357,10 +352,6 @@ bool ReasonerServer::pred_lookup_transform(PlTerm a1, PlTerm a2, PlTerm a3) {
     return true;
 }
 
-PREDICATE(lookup_transform, 3) {
-    return REASONER->pred_lookup_transform(A1, A2, A3);
-}
-
 bool ReasonerServer::pred_transform_point(PlTerm frame_in, PlTerm point_in, PlTerm frame_out, PlTerm point_out) {
 
     psi::Term point_in_psi = prologToPsi(point_in);
@@ -387,10 +378,6 @@ bool ReasonerServer::pred_transform_point(PlTerm frame_in, PlTerm point_in, PlTe
     }
 }
 
-PREDICATE(transform_point, 4) {
-    return REASONER->pred_transform_point(A1, A2, A3, A4);
-}
-
 bool ReasonerServer::pred_quaternion_to_rpy(PlTerm quat, PlTerm rpy) {
     psi::Term quat_psi = prologToPsi(quat);
     tf::Quaternion q(quat_psi.get(0).getNumber(), quat_psi.get(1).getNumber(), quat_psi.get(2).getNumber(), quat_psi.get(3).getNumber());
@@ -403,24 +390,10 @@ bool ReasonerServer::pred_quaternion_to_rpy(PlTerm quat, PlTerm rpy) {
     return true;
 }
 
-PREDICATE(quaternion_to_rpy, 2) {
-    return REASONER->pred_quaternion_to_rpy(A1, A2);
-}
-
 bool ReasonerServer::loadDatabase(const string& filename) {
     return PlCall("consult", PlTermv(filename.c_str()));
 }
 
-PREDICATE(get_ros_package_path, 2) {
-    string package = (char*)A1;
-    std::string path = ros::package::getPath(package);
-    if (path != "") {
-        A2 = PlAtom(path.c_str());
-        return true;
-    }
-    return false;
-}
-
 void ReasonerServer::sighandler(int signo) {
-    //ros::shutdown();
+    ros::shutdown();
 }
