@@ -16,9 +16,9 @@
 
 using namespace std;
 
-Reasoner* REASONER;
+ReasonerServer* REASONER;
 
-Reasoner::Reasoner(const std::string& service_name) : psi::Server(service_name) {
+ReasonerServer::ReasonerServer(const std::string& service_name) : psi::Server(service_name) {
     ros::NodeHandle nh_private("~");
 
     tf_listener_ = new tf::TransformListener();
@@ -30,16 +30,16 @@ Reasoner::Reasoner(const std::string& service_name) : psi::Server(service_name) 
     wire_client_ = new psi::Client("/wire");
 }
 
-Reasoner::~Reasoner() {
+ReasonerServer::~ReasonerServer() {
     //delete wire_server_;
 }
 
-void Reasoner::start() {
+void ReasonerServer::start() {
     //wire_server_->start();
     ros::spin();
 }
 
-vector<psi::BindingSet> Reasoner::processQuery(const psi::Term& query) {
+vector<psi::BindingSet> ReasonerServer::processQuery(const psi::Term& query) {
 
     if (query.getFunctor() == "property") {
         ROS_DEBUG("processQuery: Rerouting to WIRE: %s", query.toString().c_str());
@@ -82,7 +82,7 @@ vector<psi::BindingSet> Reasoner::processQuery(const psi::Term& query) {
     return result;
 }
 
-bool Reasoner::processAssert(const vector<psi::Term>& facts) {
+bool ReasonerServer::processAssert(const vector<psi::Term>& facts) {
 
     if (facts.empty()) {
         ROS_ERROR("Empty received empty fact list");
@@ -112,7 +112,7 @@ bool Reasoner::processAssert(const vector<psi::Term>& facts) {
     return true;
 }
 
-bool Reasoner::processRetract(const std::vector<psi::Term>& facts) {
+bool ReasonerServer::processRetract(const std::vector<psi::Term>& facts) {
 
     if (facts.empty()) {
         ROS_ERROR("Empty received empty retract list");
@@ -142,12 +142,12 @@ bool Reasoner::processRetract(const std::vector<psi::Term>& facts) {
     return true;
 }
 
-PlTerm Reasoner::psiToProlog(const psi::Term& term) const {
+PlTerm ReasonerServer::psiToProlog(const psi::Term& term) const {
     map<string, PlTerm> str_to_var;
     return psiToProlog(term, str_to_var);
 }
 
-PlTerm Reasoner::psiToProlog(const psi::Term& term, map<string, PlTerm>& str_to_var) const {
+PlTerm ReasonerServer::psiToProlog(const psi::Term& term, map<string, PlTerm>& str_to_var) const {
     if (term.isVariable()) {
         // term is a variable
         map<string, PlTerm>::iterator it_var = str_to_var.find(term.toString());
@@ -209,7 +209,7 @@ PlTerm Reasoner::psiToProlog(const psi::Term& term, map<string, PlTerm>& str_to_
     return PlTerm("UNKNOWN");
 }
 
-psi::Term Reasoner::prologToPsi(const PlTerm& pl_term) const {
+psi::Term ReasonerServer::prologToPsi(const PlTerm& pl_term) const {
     try {
         // try if pl_term is a number
         double num = (double)pl_term;
@@ -253,7 +253,7 @@ psi::Term Reasoner::prologToPsi(const PlTerm& pl_term) const {
     }
 }
 
-bool Reasoner::pred_property_list(PlTerm a1, PlTerm a2, PlTerm a3, PlTerm a4) {
+bool ReasonerServer::pred_property_list(PlTerm a1, PlTerm a2, PlTerm a3, PlTerm a4) {
 
     ROS_DEBUG("pred_property_list: Rerouting to WIRE: property(%s, %s, %s)", (char*)a1, (char*)a2, (char*)a3);
 
@@ -326,7 +326,7 @@ PREDICATE(property_list, 4) {
     return REASONER->pred_property_list(A1, A2, A3, A4);
 }
 
-bool Reasoner::pred_lookup_transform(PlTerm a1, PlTerm a2, PlTerm a3) {
+bool ReasonerServer::pred_lookup_transform(PlTerm a1, PlTerm a2, PlTerm a3) {
     tf::StampedTransform transform;
 
     try {
@@ -360,7 +360,7 @@ PREDICATE(lookup_transform, 3) {
     return REASONER->pred_lookup_transform(A1, A2, A3);
 }
 
-bool Reasoner::pred_transform_point(PlTerm frame_in, PlTerm point_in, PlTerm frame_out, PlTerm point_out) {
+bool ReasonerServer::pred_transform_point(PlTerm frame_in, PlTerm point_in, PlTerm frame_out, PlTerm point_out) {
 
     psi::Term point_in_psi = prologToPsi(point_in);
     double x = point_in_psi.get(0).getNumber();
@@ -390,7 +390,7 @@ PREDICATE(transform_point, 4) {
     return REASONER->pred_transform_point(A1, A2, A3, A4);
 }
 
-bool Reasoner::pred_quaternion_to_rpy(PlTerm quat, PlTerm rpy) {
+bool ReasonerServer::pred_quaternion_to_rpy(PlTerm quat, PlTerm rpy) {
     psi::Term quat_psi = prologToPsi(quat);
     tf::Quaternion q(quat_psi.get(0).getNumber(), quat_psi.get(1).getNumber(), quat_psi.get(2).getNumber(), quat_psi.get(3).getNumber());
 
@@ -406,7 +406,7 @@ PREDICATE(quaternion_to_rpy, 2) {
     return REASONER->pred_quaternion_to_rpy(A1, A2);
 }
 
-bool Reasoner::loadDatabase(const string& filename) {
+bool ReasonerServer::loadDatabase(const string& filename) {
     return PlCall("consult", PlTermv(filename.c_str()));
 }
 
@@ -431,7 +431,7 @@ int main(int argc, char **argv) {
     ros::NodeHandle nh_private("~");
 
     // Initialize Prolog Engine
-    putenv("SWI_HOME_DIR=/usr/lib/swi-prolog");
+    putenv((char*)"SWI_HOME_DIR=/usr/lib/swi-prolog");
     //PlEngine prolog_engine(argv[0]);
 
     PlEngine prolog_engine(argc, argv);
@@ -440,7 +440,7 @@ int main(int argc, char **argv) {
     // Therefore, make sure ROS is shutdown if Prolog receives an interrupt signal
     PL_signal(SIGINT, &sighandler);
 
-    REASONER = new Reasoner("/reasoner");
+    REASONER = new ReasonerServer("/reasoner");
 
     for(int i_database = 1; true; ++i_database) {
         stringstream s_param;

@@ -11,13 +11,13 @@
 
 #include "swi-cpp/SWI-cpp.h"
 
-class Reasoner : public psi::Server {
+class ReasonerServer : public psi::Server {
 
 public:
 
-    Reasoner(const std::string& service_name);
+    ReasonerServer(const std::string& service_name);
 
-    virtual ~Reasoner();
+    virtual ~ReasonerServer();
 
     void start();
 
