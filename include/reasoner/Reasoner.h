@@ -25,12 +25,6 @@ protected:
 
     static void sighandler(int signo);
 
-    PlTerm psiToProlog(const psi::Term& term) const;
-
-    PlTerm psiToProlog(const psi::Term& term, std::map<std::string, PlTerm>& str_to_var) const;
-
-    psi::Term prologToPsi(const PlTerm& pl_term) const;
-
 };
 
 #endif

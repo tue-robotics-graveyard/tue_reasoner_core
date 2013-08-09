@@ -1,4 +1,7 @@
 #include "reasoner/Reasoner.h"
+#include "reasoner/conversions.h"
+
+#include <psi/Client.h>
 
 #include "swi-cpp/SWI-cpp.h"
 
@@ -72,98 +75,51 @@ bool Reasoner::loadDatabase(const std::string& filename) {
     return PlCall("consult", PlTermv(filename.c_str()));
 }
 
-PlTerm Reasoner::psiToProlog(const psi::Term& term) const {
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+//
+//                                    PREDICATES
+//
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+std::map<std::string, psi::Client*> psi_clients_;
+
+PREDICATE(extern, 3) {
     std::map<std::string, PlTerm> str_to_var;
-    return psiToProlog(term, str_to_var);
-}
+    psi::Term q = prologToPsi(A1, str_to_var);
+    std::string server_name = (char*)A2;
 
-PlTerm Reasoner::psiToProlog(const psi::Term& term, std::map<std::string, PlTerm>& str_to_var) const {
-    if (term.isVariable()) {
-        // term is a variable
-        std::map<std::string, PlTerm>::iterator it_var = str_to_var.find(term.toString());
-        if (it_var != str_to_var.end()) {
-            // known variable
-            return it_var->second;
-        } else {
-            // unknown variable, so add to map
-            PlTerm var;
-            str_to_var[term.toString()] = var;
-            return var;
-        }
-    } else if (term.isConstant()) {
-        const psi::Constant* con = static_cast<const psi::Constant*>(&term);
-        if (con->isNumber()) {
-            return PlTerm(con->getNumber());
-        } else {
-            return PlTerm(con->toString().c_str());
-        }
+    psi::Client* client;
 
-    } else if (term.isSequence()) {
-        const psi::Sequence* seq = static_cast<const psi::Sequence*>(&term);
-
-        PlTerm pl_list;
-        PlTail l(pl_list);
-
-        for(unsigned int i = 0; i < seq->getSize(); ++i) {
-            l.append(psiToProlog(seq->get(i), str_to_var));
-        }
-
-        l.close();
-        return pl_list;
-    } else if (term.isCompound()) {
-        // term is a compound
-        PlTermv args(term.getSize());
-
-        for(unsigned int i = 0; i < term.getSize(); ++i) {
-            args[i] = psiToProlog(term.get(i), str_to_var);
-        }
-
-        return PlCompound(term.getFunctor().c_str(), args);
+    std::map<std::string, psi::Client*>::iterator it = psi_clients_.find(server_name);
+    if (it == psi_clients_.end()) {
+        client = new psi::Client(server_name);
+        psi_clients_[server_name] = client;
+    } else {
+        client = it->second;
     }
 
-    return PlTerm("UNKNOWN");
-}
+    PlTail binding_list_list(A3);
 
-psi::Term Reasoner::prologToPsi(const PlTerm& pl_term) const {
-    try {
-        // try if pl_term is a number
-        double num = (double)pl_term;
-        return psi::Constant(num);
-    } catch(const PlTypeError& e) {
-    }
+    std::vector<psi::BindingSet> binding_sets = client->query(q);
+    for(std::vector<psi::BindingSet>::iterator it = binding_sets.begin(); it != binding_sets.end(); ++it) {
 
-    try {
-        if (pl_term.arity() == 0) {
-            // constant (number was already tested, so it is a string)
-            return psi::Constant((char*)pl_term);
-        } else {
-            // compound
+        PlTerm t_binding_list;
+        PlTail binding_list(t_binding_list);
 
-            if (std::string(pl_term.name()) == ".") {
-                // special case: list
-
-                psi::Sequence seq;
-
-                PlTail pl_list(pl_term);
-                PlTerm elem;
-                while(pl_list.next(elem)) {
-                    seq.add(prologToPsi(elem));
-                    // TODO: fix memory leak
-                }
-                return seq;
-            } else {
-                psi::Compound c(pl_term.name());
-
-                for(int i = 0; i < pl_term.arity(); ++i) {
-                    c.addArgument(prologToPsi(pl_term[i+1]));
-                    // TODO: fix memory leak
-                }
-                return c;
-            }
-
+        const psi::BindingSet& binding_set = *it;
+        const std::map<std::string, psi::Term> bindings = binding_set.getAllBindings();
+        for(std::map<std::string, psi::Term>::const_iterator it2 = bindings.begin(); it2 != bindings.end(); ++it2) {
+            PlTermv binding_args(2);
+            binding_args[0] = str_to_var[it2->first];
+            binding_args[1] = psiToProlog(it2->second, str_to_var);
+            binding_list.append(PlCompound("=", binding_args));
         }
-    } catch (const PlTypeError& e) {
-        // pl_term is a variable
-        return psi::Variable((char*)pl_term);
+
+        binding_list.close();
+        binding_list_list.append(t_binding_list);
     }
+
+    binding_list_list.close();
+
+    return true;
 }

@@ -54,6 +54,11 @@ PlTerm psiToProlog(const psi::Term& term, std::map<std::string, PlTerm>& str_to_
     return PlTerm("UNKNOWN");
 }
 
+psi::Term prologToPsi(const PlTerm& pl_term) {
+    std::map<std::string, PlTerm> str_to_var;
+    return prologToPsi(pl_term, str_to_var);
+}
+
 psi::Term prologToPsi(const PlTerm& pl_term, std::map<std::string, PlTerm>& str_to_var) {
     try {
         // try if pl_term is a number

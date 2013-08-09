@@ -11,6 +11,8 @@ PlTerm psiToProlog(const psi::Term& term);
 
 PlTerm psiToProlog(const psi::Term& term, std::map<std::string, PlTerm>& str_to_var);
 
+psi::Term prologToPsi(const PlTerm& pl_term);
+
 psi::Term prologToPsi(const PlTerm& pl_term, std::map<std::string, PlTerm>& str_to_var);
 
 #endif
