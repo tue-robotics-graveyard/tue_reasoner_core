@@ -15,7 +15,7 @@
 
 Reasoner* Reasoner::instance_ = 0;
 
-Reasoner::Reasoner() {
+Reasoner::Reasoner() : psi::Server(ros::NodeHandle("~").getNamespace() + "/reasoner") {
     if (instance_) {
         // throw error
         printf("ERROR: Only one Reasoner object may exist per process.\n");
@@ -98,6 +98,24 @@ bool Reasoner::customPredicate(const psi::Term& goal, std::vector<psi::BindingSe
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 //
+//                                PSI COMMUNICATION
+//
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+std::vector<psi::BindingSet> Reasoner::processQuery(const psi::Term& q) {
+    return this->query(q);
+}
+
+bool Reasoner::processAssert(const std::vector<psi::Term>& facts) {
+    return false;
+}
+
+bool Reasoner::processRetract(const std::vector<psi::Term>& facts) {
+    return false;
+}
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+//
 //                                    PREDICATES
 //
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -163,15 +181,10 @@ PREDICATE(rosparam, 2) {
 }
 
 PREDICATE(custom, 1) {
-
-    std::cout << "A" << std::endl;
-
     std::map<std::string, PlTerm> str_to_var;
     psi::Term t = prologToPsi(A1, str_to_var);
     std::vector<psi::BindingSet> result;
     bool success = Reasoner::getInstance().customPredicate(t, result);
-
-    std::cout << "B" << std::endl;
 
     if (!success || result.empty()) {
         return success;
@@ -186,8 +199,6 @@ PREDICATE(custom, 1) {
             it_var->second = psiToProlog(it->second, str_to_var);
         }
     }
-
-    std::cout << "C" << std::endl;
 
     return true;
 }

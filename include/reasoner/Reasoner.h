@@ -2,12 +2,13 @@
 #define _Reasoner_H_
 
 #include <psi/psi.h>
+#include <psi/Server.h>
 #include <psi/BindingSet.h>
 
 class PlTerm;
 class PlEngine;
 
-class Reasoner {
+class Reasoner : public psi::Server {
 
 public:
 
@@ -22,6 +23,15 @@ public:
     bool loadDatabase(const std::string& filename);
 
     virtual bool customPredicate(const psi::Term& goal, std::vector<psi::BindingSet>& result);
+
+
+    // PSI COMMUNICATION
+
+    std::vector<psi::BindingSet> processQuery(const psi::Term& query);
+
+    bool processAssert(const std::vector<psi::Term>& facts);
+
+    bool processRetract(const std::vector<psi::Term>& facts);
 
 protected:
 
