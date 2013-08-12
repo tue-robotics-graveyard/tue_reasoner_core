@@ -39,7 +39,7 @@ Reasoner::~Reasoner() {
 }
 
 void Reasoner::sighandler(int signo) {
-    //ros::shutdown();
+    ros::shutdown();
 }
 
 std::vector<psi::BindingSet> Reasoner::query(const psi::Term& query) {
