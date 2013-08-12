@@ -13,7 +13,15 @@
 
 #include <ros/package.h>
 
+Reasoner* Reasoner::instance_ = 0;
+
 Reasoner::Reasoner() {
+    if (instance_) {
+        // throw error
+        printf("ERROR: Only one Reasoner object may exist per process.\n");
+        return;
+    }
+
     // Initialize Prolog Engine
     putenv((char*)"SWI_HOME_DIR=/usr/lib/swi-prolog");
     //PlEngine prolog_engine(argv[0]);
@@ -32,10 +40,19 @@ Reasoner::Reasoner() {
     std::string package_path = ros::package::getPath("tue_reasoner_core");
     loadDatabase(package_path + "/prolog/std.pl");
 
+    instance_ = this;
+
 }
 
 Reasoner::~Reasoner() {
     delete prolog_engine_;
+}
+
+Reasoner& Reasoner::getInstance() {
+    if (!instance_) {
+        instance_ = new Reasoner();
+    }
+    return *instance_;
 }
 
 void Reasoner::sighandler(int signo) {
@@ -73,6 +90,10 @@ std::vector<psi::BindingSet> Reasoner::query(const psi::Term& query) {
 
 bool Reasoner::loadDatabase(const std::string& filename) {
     return PlCall("consult", PlTermv(filename.c_str()));
+}
+
+bool Reasoner::customPredicate(const psi::Term& goal, std::vector<psi::BindingSet>& result) {
+    return false;
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -137,6 +158,36 @@ PREDICATE(rosparam, 2) {
     if (v.getType() == XmlRpc::XmlRpcValue::TypeString) {
         A2 = PlAtom(((std::string)v).c_str());
     }
+
+    return true;
+}
+
+PREDICATE(custom, 1) {
+
+    std::cout << "A" << std::endl;
+
+    std::map<std::string, PlTerm> str_to_var;
+    psi::Term t = prologToPsi(A1, str_to_var);
+    std::vector<psi::BindingSet> result;
+    bool success = Reasoner::getInstance().customPredicate(t, result);
+
+    std::cout << "B" << std::endl;
+
+    if (!success || result.empty()) {
+        return success;
+    }
+
+    // for now, only look at first binding:
+    std::map<std::string, psi::Term> bindings = result.front().getAllBindings();
+
+    for(std::map<std::string, psi::Term>::iterator it = bindings.begin(); it != bindings.end(); ++it) {
+        std::map<std::string, PlTerm>::iterator it_var = str_to_var.find(it->first);
+        if (it_var != str_to_var.end()) {
+            it_var->second = psiToProlog(it->second, str_to_var);
+        }
+    }
+
+    std::cout << "C" << std::endl;
 
     return true;
 }

@@ -9,6 +9,8 @@ int main(int argc, char **argv) {
     r.query(psi::Constant("ls"));
     r.query(psi::Compound("writeln", psi::Constant("\nHello world!")));
 
+
+
 //    // Initialize node
 //	ros::init(argc, argv, "ReasonerTest");
 //	ros::NodeHandle nh_private("~");
