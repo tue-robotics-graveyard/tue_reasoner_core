@@ -41,11 +41,11 @@ Reasoner::Reasoner() : psi::Server(ros::NodeHandle("~").getNamespace() + "/reaso
     loadDatabase(package_path + "/prolog/std.pl");
 
     instance_ = this;
-
 }
 
 Reasoner::~Reasoner() {
     delete prolog_engine_;
+    instance_ = 0;
 }
 
 Reasoner& Reasoner::getInstance() {
