@@ -91,7 +91,7 @@ property(ID, Prop, Value) :-
 % position
 
 property(amigo, position, gaussian(vector(X, Y, Z), symmetric_matrix([0,0,0,0,0,0]))) :-
-    lookup_transform('/map', '/base', transform(vector(X, Y, Z), _)).
+    lookup_transform('/map', '/amigo/base', transform(vector(X, Y, Z), _)).
 
 %property(ID1, position, ID2) :-
 %	property(ID2, area, area_2d(Xmin, Xmax, Ymin, Ymax)),
@@ -116,7 +116,7 @@ property(ID, Prop, Value, FrameID) :-
 
 property_expected(ID1, position, in_front_of(amigo)) :-
     property_expected(ID1, position, [X, Y, Z]),
-    transform_point('/map', [X, Y, Z], '/base_link', [Dist, HorDist, _]),
+    transform_point('/map', [X, Y, Z], '/amigo/base_link', [Dist, HorDist, _]),
     Dist > 0,
     Dist < 2,
     abs(HorDist, HorDistAbs),
@@ -124,7 +124,7 @@ property_expected(ID1, position, in_front_of(amigo)) :-
     Ratio > 1.
 
 property_expected(amigo, pose, pose_2d(X, Y, Phi)) :-
-    lookup_transform('/map', '/base_link', transform(vector(X, Y, _), Quat)),
+    lookup_transform('/map', '/amigo/base_link', transform(vector(X, Y, _), Quat)),
     quaternion_to_rpy(Quat, rpy(Phi, _, _)).
 
 % Returns expected value for property
