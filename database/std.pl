@@ -139,6 +139,17 @@ property_expected(X, Prop, Val) :-
       Val = Val2
     ).
 
+property_expected(X, Prop, Val, Frame) :-
+    property(X, Prop, PDF, Frame),
+    get_expected(PDF, Val2),
+    (
+      Val2 = exact(Val)
+     ->
+      true
+     ;
+      Val = Val2
+    ).
+
 % Returns expected value of a PDF
 get_expected(gaussian(vector(Val), _), Val).
 get_expected(discrete(Domain, Values), Val) :-
