@@ -23,7 +23,7 @@ ReasonerServer::ReasonerServer(const std::string& service_name) : psi::Server(se
     //wire_server_ = new wire::ServerROS();
     //wire_server_->registerEvidenceTopic("/world_evidence");
 
-    wire_client_ = new psi::Client("/wire", service_name + "/wire_query_result");
+    wire_client_ = new psi::Client("/wire", service_name + "/wire/query_result");
 
     // Prolog has its own signal handler which seems to interfere with ROS' handler
     // Therefore, make sure ROS is shutdown if Prolog receives an interrupt signal
