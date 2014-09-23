@@ -18,7 +18,7 @@ class ReasonerServer : public psi::Server {
 
 public:
 
-    ReasonerServer(const std::string& service_name);
+    ReasonerServer(const std::string& service_name, const std::string& wm_type);
 
     virtual ~ReasonerServer();
 
@@ -36,6 +36,8 @@ public:
 
     bool pred_property_list(PlTerm a1, PlTerm a2, PlTerm a3, PlTerm a4);
 
+    bool pred_property_expected_list(PlTerm a1, PlTerm a2, PlTerm a3, PlTerm a4);
+
     bool pred_add_evidence(PlTerm a1);
 
     bool pred_lookup_transform(PlTerm a1, PlTerm a2, PlTerm a3);
@@ -51,6 +53,8 @@ protected:
     psi::Client* wire_client_;
 
     tf::TransformListener* tf_listener_;
+
+    ros::ServiceClient ed_client_;
 
     static void sighandler(int signo);
 

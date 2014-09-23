@@ -12,6 +12,10 @@ PREDICATE(property_list, 4) {
     return REASONER->pred_property_list(A1, A2, A3, A4);
 }
 
+PREDICATE(property_expected_list, 4) {
+    return REASONER->pred_property_expected_list(A1, A2, A3, A4);
+}
+
 PREDICATE(lookup_transform, 3) {
     return REASONER->pred_lookup_transform(A1, A2, A3);
 }
@@ -46,7 +50,18 @@ int main(int argc, char **argv) {
 
     PlEngine prolog_engine(argc, argv);
 
-    REASONER = new ReasonerServer("/reasoner");
+    // Determine world model type (ed or wire)
+    std::string wm_type;
+    if (!nh_private.getParam("world_model_type", wm_type))
+        wm_type = "wire"; // Default
+
+    if (wm_type != "wire" && wm_type != "ed")
+    {
+        ROS_ERROR("Unknown world model type: %s", wm_type.c_str());
+        return 1;
+    }
+
+    REASONER = new ReasonerServer("/reasoner", wm_type);
 
     for(int i_database = 1; true; ++i_database) {
         stringstream s_param;
