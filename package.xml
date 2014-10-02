@@ -15,11 +15,12 @@
   <build_depend>roslib</build_depend>
   <build_depend>tf</build_depend>
   <build_depend>swi-prolog</build_depend>
+  <build_depend>ed</build_depend>
 
   <run_depend>psi</run_depend>
   <run_depend>roscpp</run_depend>
   <run_depend>roslib</run_depend>
   <run_depend>tf</run_depend>
-  <run_depend>swi-prolog</run_depend>
+  <run_depend>ed</run_depend>
 
 </package>

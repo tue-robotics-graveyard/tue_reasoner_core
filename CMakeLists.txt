@@ -6,6 +6,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   roslib
   tf
+  ed
 )
 
 ################################################
@@ -17,7 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES reasoner
-  CATKIN_DEPENDS psi roscpp roslib tf
+  CATKIN_DEPENDS psi roscpp roslib tf ed
 )
 
 ################################################
@@ -52,6 +53,7 @@ add_library(reasoner
     src/conversions.cpp
 )
 target_link_libraries(reasoner ${SWIPL_LIB} ${catkin_LIBRARIES})
+add_dependencies(reasoner ${catkin_EXPORTED_TARGETS})
 
 add_executable(reasoner_node src/reasoner_node.cpp)
 target_link_libraries(reasoner_node reasoner ${SWIPL_LIB})
