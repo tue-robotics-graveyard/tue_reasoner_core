@@ -372,16 +372,19 @@ bool ReasonerServer::pred_property_list(PlTerm a1, PlTerm a2, PlTerm a3, PlTerm 
 
                     if (attr_psi.isVariable() || attr_psi.toString() == "class_label")
                     {
-                        PlTermv binding(3);
-                        binding[0] = e.id.c_str();
-                        binding[1] = "class_label";
+                        if (!e.type.empty())
+                        {
+                            PlTermv binding(3);
+                            binding[0] = e.id.c_str();
+                            binding[1] = "class_label";
 
-                        psi::Sequence probs;
-                        probs.add(psi::Compound("p", psi::Constant(1.0), psi::Constant(e.type)));
+                            psi::Sequence probs;
+                            probs.add(psi::Compound("p", psi::Constant(1.0), psi::Constant(e.type)));
 
-                        binding[2] = psiToProlog(psi::Compound("discrete", psi::Constant(1), probs));
+                            binding[2] = psiToProlog(psi::Compound("discrete", psi::Constant(1), probs));
 
-                        property_list.append(PlCompound("binding", binding));
+                            property_list.append(PlCompound("binding", binding));
+                        }
                     }
 
                     if (attr_psi.isVariable() || attr_psi.toString() == "position")
