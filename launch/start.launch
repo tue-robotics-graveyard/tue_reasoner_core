@@ -3,7 +3,7 @@
 <launch>
 
     <arg name="machine" value="$(optenv MACHINE_REASONER localhost)"/>
-    <include file="$(find amigo_machine_files)/machines/$(arg machine).machine" />
+    <include file="$(env ROBOT_MACHINE_DIR)/machines/$(arg machine).machine" />
 
     <arg name="args" default="" /> 
     <arg name="env" default="$(optenv ROBOT_ENV robotics_testlab_A)" />
